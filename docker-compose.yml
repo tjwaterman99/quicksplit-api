@@ -10,11 +10,18 @@ services:
       - type: bind
         source: ./tests
         target: /tests
-    command: flask run --host 0.0.0.0 --port $PORT
+    command: flask run --host 0.0.0.0 --port 5000
     environment:
       PORT: 5000
       FLASK_APP: app
       FLASK_ENV: development
       PYTHONPATH: /
+      DATABASE_URL: postgresql://developer:notsecret@postgres:5432/development
+  postgres:
+    image: postgres:12-alpine
+    environment:
+      POSTGRES_USER: developer
+      POSTGRES_PASSWORD: notsecret
+      POSTGRES_DB: development
 volumes:
   app:
