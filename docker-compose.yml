@@ -1,0 +1,19 @@
+version: '3.7'
+services:
+  web:
+    build: .
+    ports: ['5000:5000']
+    volumes:
+      - type: bind
+        source: ./app
+        target: /app
+      - type: bind
+        source: ./tests
+        target: /tests
+    command: flask run --host 0.0.0.0 --port 5000
+    environment:
+      FLASK_APP: app
+      FLASK_ENV: development
+      PYTHONPATH: /
+volumes:
+  app:
