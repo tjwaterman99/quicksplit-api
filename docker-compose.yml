@@ -10,6 +10,9 @@ services:
       - type: bind
         source: ./tests
         target: /tests
+      - type: bind
+        source: ./migrations
+        target: /migrations
     command: flask run --host 0.0.0.0 --port 5000
     environment:
       PORT: 5000
@@ -23,5 +26,3 @@ services:
       POSTGRES_USER: developer
       POSTGRES_PASSWORD: notsecret
       POSTGRES_DB: development
-volumes:
-  app:

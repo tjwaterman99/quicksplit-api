@@ -3,7 +3,7 @@ import pytest
 import sqlalchemy
 
 from app import create_app
-from app.models import db as _db
+from app.models import db as _db, Account, User
 
 
 @pytest.fixture(scope='session')
@@ -41,3 +41,19 @@ def db(database):
 @pytest.fixture()
 def client(db, app):
     return app.test_client()
+
+
+@pytest.fixture()
+def account(db):
+    account = Account()
+    db.session.add(account)
+    db.session.commit()
+    return account
+
+
+@pytest.fixture()
+def user(db, account):
+    user = User(account=account)
+    db.session.add(user)
+    db.session.commit()
+    return user
