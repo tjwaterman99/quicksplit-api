@@ -3,7 +3,7 @@ import pytest
 import sqlalchemy
 
 from app import create_app
-from app.models import db as _db, Account, User
+from app.models import db as _db, Account, User, Subject, Experiment, Exposure, Conversion
 
 
 @pytest.fixture(scope='session')
@@ -57,3 +57,35 @@ def user(db, account):
     db.session.add(user)
     db.session.commit()
     return user
+
+
+@pytest.fixture()
+def experiment(db, user):
+    experiment = Experiment(user=user, name="Test Experiment")
+    db.session.add(experiment)
+    db.session.commit()
+    return experiment
+
+
+@pytest.fixture()
+def subject(db, experiment):
+    subject = Subject(user=experiment.user, id='test-subject-1')
+    db.session.add(subject)
+    db.session.commit()
+    return subject
+
+
+@pytest.fixture()
+def exposure(db, subject, experiment,  user):
+    exposure = Exposure(subject=subject, experiment=experiment, user=user)
+    db.session.add(exposure)
+    db.session.commit()
+    return exposure
+
+
+@pytest.fixture()
+def conversion(db, subject, experiment,  user):
+    conversion = Conversion(subject=subject, experiment=experiment, user=user)
+    db.session.add(conversion)
+    db.session.commit()
+    return conversion
