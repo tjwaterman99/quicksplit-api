@@ -3,6 +3,7 @@ import uuid
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 db = SQLAlchemy()
@@ -19,10 +20,18 @@ class Account(TimestampMixin, db.Model):
     users = db.relationship('User', lazy="dynamic")
 
 
+class Token(TimestampMixin, db.Model):
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False)
+
+
 class User(TimestampMixin, db.Model):
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'))
+    email = db.Column(db.String(length=128), nullable=False, unique=True)
+    password_hash = db.Column(db.String(length=128), nullable=False)
 
+    tokens = db.relationship('Token', lazy='joined', backref='user', cascade='delete')
     account = db.relationship('Account', lazy='joined')
     experiments = db.relationship('Experiment', lazy='dynamic', backref="user", cascade='delete')
     subjects = db.relationship('Subject', lazy='dynamic', backref='user', cascade='delete')
@@ -32,6 +41,20 @@ class User(TimestampMixin, db.Model):
     conversions = db.relationship('Conversion', lazy='dynamic', backref='user', cascade='delete',
                                   primaryjoin='User.id==Conversion.user_id',
                                   foreign_keys='Conversion.user_id')
+
+    def set_password_hash(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    @classmethod
+    def create(cls, email, password, account, token):
+        db.session.add(token)
+        user = cls(email=email, account=account)
+        user.set_password_hash(password)
+        user.tokens.append(token)
+        return user
 
 
 # TODO: add relationship to subjects thru the exposures table
@@ -64,11 +87,11 @@ class Exposure(TimestampMixin, db.Model):
     experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), primary_key=True)
     subject_id = db.Column(db.String(length=64), primary_key=True)
     user_id = db.Column(UUID(as_uuid=True), primary_key=True)
-    db.ForeignKeyConstraint(['subject_id', 'user_id'], ['subject.id', 'user.id'])
+    db.ForeignKeyConstraint(['subject_id', 'user_id'], ['subject.id', 'user.id'], name='subject_id_user_id_fkey')
 
 
 class Conversion(TimestampMixin, db.Model):
     experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), primary_key=True)
     subject_id = db.Column(db.String(length=64), primary_key=True)
     user_id = db.Column(UUID(as_uuid=True), primary_key=True)
-    db.ForeignKeyConstraint(['subject_id', 'user_id'], ['subject.id', 'user.id'])
+    db.ForeignKeyConstraint(['subject_id', 'user_id'], ['subject.id', 'user.id'], name='subject_id_user_id_fkey')

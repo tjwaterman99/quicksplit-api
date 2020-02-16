@@ -3,7 +3,7 @@ import pytest
 import sqlalchemy
 
 from app import create_app
-from app.models import db as _db, Account, User, Subject, Experiment, Exposure, Conversion
+from app.models import db as _db, Account, User, Subject, Experiment, Exposure, Conversion, Token
 
 
 @pytest.fixture(scope='session')
@@ -32,10 +32,10 @@ def database(app):
 
 @pytest.fixture()
 def db(database):
-    database.session.rollback()
-    database.session.begin(subtransactions=True)
+    database.session.begin_nested()
     yield database
     database.session.rollback()
+    database.session.close()
 
 
 @pytest.fixture()
@@ -47,15 +47,15 @@ def client(db, app):
 def account(db):
     account = Account()
     db.session.add(account)
-    db.session.commit()
     return account
 
 
 @pytest.fixture()
 def user(db, account):
-    user = User(account=account)
+    token = Token()
+    db.session.add(token)
+    user = User.create(account=account, email="tester@gmail.com", password="password", token=token)
     db.session.add(user)
-    db.session.commit()
     return user
 
 
@@ -63,7 +63,6 @@ def user(db, account):
 def experiment(db, user):
     experiment = Experiment(user=user, name="Test Experiment")
     db.session.add(experiment)
-    db.session.commit()
     return experiment
 
 
@@ -71,7 +70,6 @@ def experiment(db, user):
 def subject(db, experiment):
     subject = Subject(user=experiment.user, id='test-subject-1')
     db.session.add(subject)
-    db.session.commit()
     return subject
 
 
@@ -79,7 +77,6 @@ def subject(db, experiment):
 def exposure(db, subject, experiment,  user):
     exposure = Exposure(subject=subject, experiment=experiment, user=user)
     db.session.add(exposure)
-    db.session.commit()
     return exposure
 
 
@@ -87,5 +84,4 @@ def exposure(db, subject, experiment,  user):
 def conversion(db, subject, experiment,  user):
     conversion = Conversion(subject=subject, experiment=experiment, user=user)
     db.session.add(conversion)
-    db.session.commit()
     return conversion
