@@ -1,3 +1,4 @@
+import random
 import os
 import uuid
 
@@ -53,9 +54,14 @@ def token(db):
 
 
 @pytest.fixture()
-def user(db, account, token):
+def email():
+    return f"tester+{random.random()}@gmail.com"
+
+
+@pytest.fixture()
+def user(db, account, token, email):
     db.session.add(token)
-    user = User.create(account=account, email="tester@gmail.com", password="password", token=token)
+    user = User.create(account=account, email=email, password="password", token=token)
     db.session.add(user)
     return user
 
@@ -88,7 +94,6 @@ def conversion(db, subject, experiment,  user):
     return conversion
 
 
-# We need to have a better set up with the authorization
 @pytest.fixture()
 def client(db, app, user):
     client = app.test_client()

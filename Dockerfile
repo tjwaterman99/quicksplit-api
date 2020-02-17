@@ -9,7 +9,8 @@ RUN pip install flask \
 								flask-shell-ipython \
 								psycopg2-binary \
 								pytest \
-								gunicorn
+								gunicorn \
+								requests
 
 COPY ./app /app
 COPY ./tests /tests

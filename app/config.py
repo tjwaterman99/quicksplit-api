@@ -11,7 +11,7 @@ class TestingConfig(ProductionConfig):
     DATABASE_URL = os.environ['DATABASE_URL'].replace('/development', '/testing')
     SQLALCHEMY_DATABASE_URI = DATABASE_URL
     SQLALCHEMY_TRACK_MODIFICATIONS = True
-    SQLALCHEMY_ECHO = False
+    SQLALCHEMY_ECHO = True
 
 
 class DevelopmentConfig(ProductionConfig):

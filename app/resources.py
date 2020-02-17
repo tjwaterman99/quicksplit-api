@@ -88,7 +88,7 @@ class ExposuresResource(Resource):
     @protected
     def post(self):
         experiment_name = request.json['experiment']
-        subject_id = request.json['subject_id']
+        subject_id = str(request.json['subject_id'])
 
         experiment = g.user.experiments.filter(Experiment.name==experiment_name).first()
         if not experiment:
@@ -105,6 +105,7 @@ class ExposuresResource(Resource):
         ).on_conflict_do_nothing()
         db.session.execute(subject_insert)
         db.session.execute(exposure_insert)
+        db.session.commit()
 
 
 class ConversionsResource(Resource):
@@ -112,7 +113,7 @@ class ConversionsResource(Resource):
     @protected
     def post(self):
         experiment_name = request.json['experiment']
-        subject_id = request.json['subject_id']
+        subject_id = str(request.json['subject_id'])
 
         experiment = g.user.experiments.filter(Experiment.name==experiment_name).first()
         if not experiment:
@@ -128,6 +129,7 @@ class ConversionsResource(Resource):
             user_id=g.user.id
         ).on_conflict_do_nothing()
         db.session.execute(conversion_insert)
+        db.session.commit()
 
 
 class ResultsResource(Resource):

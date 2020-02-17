@@ -13,5 +13,7 @@ jobs:
         run: docker-compose up --detach
       - name: Log container status
         run: docker-compose ps
+      - name: Run seeds
+        run: docker-compose exec -T web flask db upgrade
       - name: Run tests
-        run: docker-compose run --rm web pytest tests/
+        run: docker-compose exec -T web pytest tests/

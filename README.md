@@ -12,7 +12,7 @@ docker-compose up --detach
 Run the tests from inside a docker container.
 
 ```
-docker-compose run --rm web pytest tests/
+docker-compose exec web pytest tests
 ```
 
 ## Deploying
