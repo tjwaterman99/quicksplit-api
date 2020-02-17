@@ -1,4 +1,6 @@
 import os
+import uuid
+
 import pytest
 import sqlalchemy
 
@@ -39,11 +41,6 @@ def db(database):
 
 
 @pytest.fixture()
-def client(db, app):
-    return app.test_client()
-
-
-@pytest.fixture()
 def account(db):
     account = Account()
     db.session.add(account)
@@ -51,8 +48,12 @@ def account(db):
 
 
 @pytest.fixture()
-def user(db, account):
-    token = Token()
+def token(db):
+    return Token(id=uuid.uuid4())
+
+
+@pytest.fixture()
+def user(db, account, token):
     db.session.add(token)
     user = User.create(account=account, email="tester@gmail.com", password="password", token=token)
     db.session.add(user)
@@ -85,3 +86,11 @@ def conversion(db, subject, experiment,  user):
     conversion = Conversion(subject=subject, experiment=experiment, user=user)
     db.session.add(conversion)
     return conversion
+
+
+# We need to have a better set up with the authorization
+@pytest.fixture()
+def client(db, app, user):
+    client = app.test_client()
+    client.environ_base['HTTP_AUTHORIZATION'] = f"{user.token.id}"
+    return client

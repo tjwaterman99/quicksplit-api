@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import uuid
 
 from flask_sqlalchemy import SQLAlchemy
@@ -20,18 +21,25 @@ class Account(TimestampMixin, db.Model):
     users = db.relationship('User', lazy="dynamic")
 
 
+@dataclass
 class Token(TimestampMixin, db.Model):
+    id: str
+
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False)
 
 
+@dataclass
 class User(TimestampMixin, db.Model):
+    id: str
+    token: Token
+
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'))
     email = db.Column(db.String(length=128), nullable=False, unique=True)
     password_hash = db.Column(db.String(length=128), nullable=False)
 
-    tokens = db.relationship('Token', lazy='joined', backref='user', cascade='delete')
+    token = db.relationship('Token', lazy='joined', backref='user', uselist=False, cascade='delete')
     account = db.relationship('Account', lazy='joined')
     experiments = db.relationship('Experiment', lazy='dynamic', backref="user", cascade='delete')
     subjects = db.relationship('Subject', lazy='dynamic', backref='user', cascade='delete')
@@ -53,12 +61,16 @@ class User(TimestampMixin, db.Model):
         db.session.add(token)
         user = cls(email=email, account=account)
         user.set_password_hash(password)
-        user.tokens.append(token)
+        user.token = token
         return user
 
 
 # TODO: add relationship to subjects thru the exposures table
+@dataclass
 class Experiment(TimestampMixin, db.Model):
+    id: str
+    name: str
+
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'))
     name = db.Column(db.String(length=128), nullable=False)
@@ -83,7 +95,12 @@ class Subject(TimestampMixin, db.Model):
                                 foreign_keys='Conversion.subject_id')
 
 
+@dataclass
 class Exposure(TimestampMixin, db.Model):
+    experiment_id: str
+    subject_id: str
+    user_id: str
+
     experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), primary_key=True)
     subject_id = db.Column(db.String(length=64), primary_key=True)
     user_id = db.Column(UUID(as_uuid=True), primary_key=True)

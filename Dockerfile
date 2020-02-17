@@ -5,6 +5,7 @@ ENV PORT=5000
 RUN pip install flask \
 								flask-sqlalchemy \
 								flask-migrate \
+								flask-restful \
 								flask-shell-ipython \
 								psycopg2-binary \
 								pytest \

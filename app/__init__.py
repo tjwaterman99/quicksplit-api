@@ -4,7 +4,7 @@ from flask import Flask
 from flask_migrate import Migrate
 from werkzeug.utils import import_string
 
-from app.views import root
+from app.resources import api, load_user
 from app.models import db, Account, User, Experiment, Subject, Exposure, Conversion
 
 
@@ -31,8 +31,9 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)
+    api.init_app(app)
 
-    app.register_blueprint(root)
     app.shell_context_processor(shell_context)
+    app.before_request(load_user)
 
     return app

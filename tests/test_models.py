@@ -13,7 +13,7 @@ def test_user_create(db):
     assert Account.query.first() == account
     assert user in account.users.all()
     assert account == user.account
-    assert token in user.tokens
+    assert token == user.token
     assert user.check_password('password')
 
 
