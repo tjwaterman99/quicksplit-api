@@ -13,6 +13,12 @@ services:
       - type: bind
         source: ./migrations
         target: /migrations
+      - type: bind
+        source: ./cli/cli
+        target: /cli
+      - type: bind
+        source: ./cli/setup.py
+        target: /setup.py
     command: flask run --host 0.0.0.0 --port 5000
     environment:
       PORT: 5000
@@ -20,6 +26,7 @@ services:
       FLASK_ENV: development
       PYTHONPATH: /
       DATABASE_URL: postgresql://developer:notsecret@postgres:5432/development
+      QUICKSPLIT_API_URL: http://web:5000
   postgres:
     image: postgres:12-alpine
     environment:

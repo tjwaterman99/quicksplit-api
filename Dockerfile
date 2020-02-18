@@ -15,5 +15,9 @@ RUN pip install flask \
 COPY ./app /app
 COPY ./tests /tests
 COPY ./migrations /migrations
+COPY ./cli /cli
+COPY ./cli/setup.py /setup.py
+
+RUN pip install --editable .
 
 CMD gunicorn 'app:create_app()' --bind 0.0.0.0:$PORT

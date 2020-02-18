@@ -9,6 +9,9 @@ from app import create_app
 from app.models import db as _db, Account, User, Subject, Experiment, Exposure, Conversion, Token
 
 
+os.environ.setdefault('QUICKSPLIT_API_URL', 'http://web:5000')
+
+
 @pytest.fixture(scope='session')
 def dbconn():
     engine = sqlalchemy.engine.create_engine(os.environ['DATABASE_URL'])

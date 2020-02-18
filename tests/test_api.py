@@ -4,7 +4,7 @@ QUICK_SPLIT_API_URL for selecting which api to test.
 
 To test against a production api, you could run:
 
-    docker-compose run -e QUICK_SPLIT_API_URL=https://quick-split.herokuapp.com  --rm web pytest tests/test_api.py
+    docker-compose run -e QUICKSPLIT_API_URL=https://quick-split.herokuapp.com  --rm web pytest tests/test_api.py
 
 Note that the order of the tests is important.
 """
@@ -17,12 +17,9 @@ import requests
 import pytest
 
 
-os.environ.setdefault('QUICK_SPLIT_API_URL', 'http://web:5000')
-
-
 class Client(object):
     def __init__(self, url=None):
-        self.url = url or os.environ['QUICK_SPLIT_API_URL']
+        self.url = url or os.environ['QUICKSPLIT_API_URL']
         self.token = None
 
     def logout(self):

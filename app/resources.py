@@ -61,6 +61,18 @@ class UserResource(Resource):
         return user
 
 
+class LoginResource(Resource):
+
+    def post(self):
+        email = request.json['email']
+        password = request.json['password']
+        user = User.query.filter(User.email==email).first()
+        if user.check_password(password):
+            return user.token
+        else:
+            abort(403)
+
+
 class ExperimentsResource(Resource):
 
     @protected
@@ -151,3 +163,4 @@ api.add_resource(ExperimentIdResource, '/experiments/<experiment_id>')
 api.add_resource(ExposuresResource, '/exposures')
 api.add_resource(ConversionsResource, '/conversions')
 api.add_resource(ResultsResource, '/results')
+api.add_resource(LoginResource, '/login')

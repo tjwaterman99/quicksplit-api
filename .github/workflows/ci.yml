@@ -16,4 +16,4 @@ jobs:
       - name: Run seeds
         run: docker-compose exec -T web flask db upgrade
       - name: Run tests
-        run: docker-compose exec -T web pytest tests/
+        run: docker-compose exec -T web pytest tests/ -v
