@@ -29,39 +29,39 @@ def password():
 
 
 def test_cli_loads():
-    assert subprocess.run('split').returncode == 0
+    assert subprocess.run('quicksplit').returncode == 0
 
 
 def test_cli_registers(email, password):
-    cmd = f'split register --email {email} --password {password}'.split()
+    cmd = f'quicksplit register --email {email} --password {password}'.split()
     resp = subprocess.run(cmd, capture_output=True)
     assert resp.returncode == 0
     assert email in resp.stdout.decode()
 
 
 def test_cli_registers_email(email):
-    cmd = ['split', 'whoami']
+    cmd = ['quicksplit', 'whoami']
     resp = subprocess.run(cmd, capture_output=True)
     assert resp.returncode == 0
     assert email in resp.stdout.decode()
 
 
 def test_cli_uses_correct_url():
-    cmd = ['split', 'config']
+    cmd = ['quicksplit', 'config']
     resp = subprocess.run(cmd, capture_output=True)
     assert resp.returncode == 0
     assert os.environ['QUICKSPLIT_API_URL'] in resp.stdout.decode()
 
 
 def test_cli_can_create_experiment():
-    cmd = ['split', 'create', '--name', 'mytestexperiment']
+    cmd = ['quicksplit', 'create', '--name', 'mytestexperiment']
     resp = subprocess.run(cmd, capture_output=True)
     assert resp.returncode == 0
     assert 'mytestexperiment' in resp.stdout.decode()
 
 
 def test_cli_can_list_experiments():
-    cmd = ['split', 'experiments']
+    cmd = ['quicksplit', 'experiments']
     resp = subprocess.run(cmd, capture_output=True)
     assert resp.returncode == 0
     assert 'mytestexperiment' in resp.stdout.decode()

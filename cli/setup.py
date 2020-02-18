@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name="quicksplit", # Replace with your own username
-    version="0.0.1",
+    version="0.0.2",
     author="Quick Split",
     author_email="tom@quicksplit.io",
     description="The developer tool for fast, easy A/B tests",
@@ -16,7 +16,7 @@ setuptools.setup(
     python_requires='>=3.6',
     entry_points={
         'console_scripts': [
-            'split = cli:base'
+            'quicksplit = cli:base'
         ]
     },
     install_requires=[
