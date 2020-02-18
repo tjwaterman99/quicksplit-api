@@ -1,8 +1,8 @@
 name: CI
 on: [push]
 jobs:
-  build:
-    name: CI
+  deploy-staging:
+    name: Deploy Staging
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -13,7 +13,27 @@ jobs:
         run: docker-compose up --detach
       - name: Log container status
         run: docker-compose ps
-      - name: Run seeds
+      - name: Seed local containers
         run: docker-compose exec -T web flask db upgrade
-      - name: Run tests
+      - name: Test containers
         run: docker-compose exec -T web pytest tests/ -v
+      - name: Install Heroku
+        if: github.ref == 'refs/heads/master'
+        run: curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
+      - name: Deploy to Heroku staging
+        if: github.ref == 'refs/heads/master'
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          HEROKU_APP_NAME: quick-split
+        run: |
+          docker tag quicksplit_web registry.heroku.com/quick-split/web
+          docker tag quicksplit_release registry.heroku.com/quick-split/release
+          docker login --username=_ --password=$HEROKU_API_KEY registry.heroku.com
+          docker push registry.heroku.com/quick-split/web
+          docker push registry.heroku.com/quick-split/release
+          heroku container:release --app $HEROKU_APP_NAME web release
+      - name: Test web requests against Heroku staging
+        run: docker-compose run --rm -e QUICKSPLIT_API_URL=https://quick-split.herokuapp.com web pytest tests/test_api.py
+        if: github.ref == 'refs/heads/master'
+      - name: Test CLI against Heroku staging
+        run: docker-compose run --rm -e QUICKSPLIT_API_URL=https://quick-split.herokuapp.com web pytest tests/test_cli.py

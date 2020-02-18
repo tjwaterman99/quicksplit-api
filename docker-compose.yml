@@ -27,6 +27,17 @@ services:
       PYTHONPATH: /
       DATABASE_URL: postgresql://developer:notsecret@postgres:5432/development
       QUICKSPLIT_API_URL: http://web:5000
+  release:
+    build:
+      dockerfile: Dockerfile.release
+      context: .
+    environment:
+      FLASK_APP: app
+      FLASK_ENV: development
+      PYTHONPATH: /
+      DATABASE_URL: postgresql://developer:notsecret@postgres:5432/development
+    depends_on:
+      - web
   postgres:
     image: postgres:12-alpine
     environment:
