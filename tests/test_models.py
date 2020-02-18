@@ -5,7 +5,7 @@ from app.models import Account, User, Experiment, Subject, Exposure, Conversion,
 
 def test_user_create(db):
     token = Token()
-    account = Account()
+    account = Account.create()
     user = User.create(account=account, token=token, email="tester@gmail.com",  password="password")
     db.session.add(user)
     db.session.commit()

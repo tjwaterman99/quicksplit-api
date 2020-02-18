@@ -6,7 +6,8 @@ import pytest
 import sqlalchemy
 
 from app import create_app
-from app.models import db as _db, Account, User, Subject, Experiment, Exposure, Conversion, Token
+from app.models import db as _db, Plan, Account, User, Subject, Experiment, Exposure, Conversion, Token
+from app.seeds import plans
 
 
 os.environ.setdefault('QUICKSPLIT_API_URL', 'http://web:5000')
@@ -32,6 +33,8 @@ def database(app):
     with app.app_context():
         _db.drop_all()
         _db.create_all()
+        _db.session.add_all(plans)
+        _db.session.commit()
         yield _db
         _db.drop_all()
 
@@ -46,7 +49,8 @@ def db(database):
 
 @pytest.fixture()
 def account(db):
-    account = Account()
+    plan = Plan.query.filter(Plan.price_in_cents==0).first()
+    account = Account(plan=plan)
     db.session.add(account)
     return account
 

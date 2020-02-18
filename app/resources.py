@@ -52,7 +52,7 @@ class UserResource(Resource):
     def post(self):
         email = request.json['email']
         password = request.json['password']
-        account = Account()
+        account = Account.create()
         token = Token()
         user = User.create(email=email, password=password, account=account,
                            token=token)
@@ -97,6 +97,7 @@ class ExperimentIdResource(Resource):
 
 class ExposuresResource(Resource):
 
+    # We might consider moving this object into a Exposure.create method
     @protected
     def post(self):
         experiment_name = request.json['experiment']
@@ -106,17 +107,24 @@ class ExposuresResource(Resource):
         if not experiment:
             abort(422, "Experiment does not exist")
 
+        if experiment.full:
+            abort(422, "Experiment has reached max exposures limit")
+
         subject_insert = insert(Subject.__table__).values(
             id=subject_id,
             user_id=g.user.id
-        ).on_conflict_do_nothing()
+        ).on_conflict_do_nothing().returning(Subject.id, Subject.user_id)
         exposure_insert = insert(Exposure.__table__).values(
             experiment_id=experiment.id,
             subject_id=subject_id,
             user_id=g.user.id
         ).on_conflict_do_nothing()
-        db.session.execute(subject_insert)
+
+        inserted_subject = db.session.execute(subject_insert).fetchone()
         db.session.execute(exposure_insert)
+        if inserted_subject:
+            experiment.subjects_counter = Experiment.subjects_counter + 1
+            db.session.add(experiment)
         db.session.commit()
 
 

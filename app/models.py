@@ -15,10 +15,34 @@ class TimestampMixin(object):
     updated_at = db.Column(db.DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
 
 
-class Account(TimestampMixin, db.Model):
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+@dataclass
+class Plan(TimestampMixin, db.Model):
+    id: str
+    name: str
+    price_in_cents: int
+    max_subjects_per_experiment: int
 
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = db.Column(db.String(), nullable=False, index=True)
+    price_in_cents = db.Column(db.Integer(), nullable=False)
+    max_subjects_per_experiment = db.Column(db.Integer(), nullable=False)
+
+
+@dataclass
+class Account(TimestampMixin, db.Model):
+    plan: Plan
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    plan_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=False)
     users = db.relationship('User', lazy="dynamic")
+
+    plan = db.relationship('Plan', backref='accounts', lazy="joined")
+
+    @classmethod
+    def create(cls, plan=None):
+        plan = plan or Plan.query.filter(Plan.price_in_cents==0).first()
+        account = cls(plan=plan)
+        return account
 
 
 @dataclass
@@ -71,15 +95,22 @@ class User(TimestampMixin, db.Model):
 class Experiment(TimestampMixin, db.Model):
     id: str
     name: str
+    full: bool
+    subjects_counter: int
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'))
     name = db.Column(db.String(length=128), nullable=False)
+    subjects_counter = db.Column(db.Integer(), nullable=False, default=0)
 
     __table_args__ = (db.UniqueConstraint('user_id', 'name'), )
 
     exposures = db.relationship('Exposure', lazy='dynamic', backref='experiment', cascade='delete')
     conversions = db.relationship('Conversion', lazy='dynamic', backref='experiment', cascade='delete')
+
+    @property
+    def full(self):
+        return self.subjects_counter >= self.user.account.plan.max_subjects_per_experiment
 
 
 # TODO: subjects should really be attached to an account, not just a user

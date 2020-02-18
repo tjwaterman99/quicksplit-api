@@ -86,6 +86,8 @@ def test_exposures_post_duplicate(db, client, experiment, user):
     })
     assert resp.status_code == 200
     assert experiment.exposures.count() == 1
+    assert experiment.subjects_counter == 1
+    assert user.subjects.count() == 1
 
 
 def test_exposures_post_duplicate_subject(db, client, experiment, user):
@@ -98,6 +100,7 @@ def test_exposures_post_duplicate_subject(db, client, experiment, user):
         'subject_id': 'testsubject'
     })
     assert resp.status_code == 200
+    assert user.subjects.count() == 1
 
     resp = client.post('/exposures', json={
         'experiment': experiment2.name,
@@ -106,6 +109,28 @@ def test_exposures_post_duplicate_subject(db, client, experiment, user):
     assert resp.status_code == 200
     assert experiment.exposures.count() == 1
     assert experiment2.exposures.count() == 1
+    assert user.subjects.count() == 1
+
+
+def test_exposures_post_subject_limits(db, client, experiment, user):
+    user.account.plan.max_subjects_per_experiment = 1
+    db.session.add_all([user, experiment])
+    db.session.commit()
+
+    resp = client.post('/exposures', json={
+        'experiment': experiment.name,
+        'subject_id': 'testsubject'
+    })
+    assert resp.status_code == 200
+
+    resp = client.post('/exposures', json={
+        'experiment': experiment.name,
+        'subject_id': 'testsubject2'
+    })
+    assert resp.status_code == 422
+    assert experiment.exposures.count() == 1
+    assert experiment.subjects_counter == 1
+    assert user.subjects.count() == 1
 
 
 def test_conversions_post(db, client, experiment, exposure):

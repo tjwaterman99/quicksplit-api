@@ -16,7 +16,8 @@ def shell_context():
         'Experiment': Experiment,
         'Subject': Subject,
         'Exposure': Exposure,
-        'Conversion': Conversion
+        'Conversion': Conversion,
+        'user': User.query.first()
     }
 
 
