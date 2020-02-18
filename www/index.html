@@ -1,6 +1,92 @@
 <html>
+<head>
+<link href="https://fonts.googleapis.com/css?family=Lato&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
+<style>
+body {
+	background-color: #2D2A24;
+	color: #FFC760;
+	font-family: "Lato", "sans-serif";
+	font-size: 2.0em;
+}
+
+.marquee {
+	margin-top: 5%;
+	text-align: center;
+}
+
+.section {
+	margin-top: 50px;
+}
+
+.section p, pre {
+	color: #EAF6FF;
+}
+
+.section pre {
+	background-color: #443C2C;
+	font-size: 0.8em;
+	border: 0px;
+	margin-bottom: 1.0em;
+}
+
+
+</style>
+</head>
 <body>
-	<h1>Quick Split</h1>
-	<h2>Coming soon... </h2>
+	<div class="container-fluid">
+		<div class="row">
+		<div class="marquee">
+			<div class="col-sm-12">
+				<h1>Quick Split</h1>
+				<h2>The developer tool for fast, simple A/B tests</h2>
+			</div>
+		</div>
+		</div>
+
+		<div class="row">
+		<div class="col-md-6 col-md-offset-3">
+		<div class="section">
+		<h3>Get started</h3>
+		<hr>
+		<p>Creating a split test requires registering an account with quicksplit.io</p>
+		<p>You can download the CLI to create your account.</p>
+<pre>
+curl -o /usr/local/bin/quicksplit https://quicksplit.io/cli
+quicksplit register
+</pre>
+		<p>You'll be prompted for an email address and password. We ask for an email address so that you can reset your password in case you ever lose it.</p>
+		<p>Now that your account is created, you can start creating A/B tests. We'll describe how to create a test that measures the affect of changing your product's landing page on its signup rate.</p>
+		<p>First, we'll need to create an Experiment that you'll use to associate each of your products users with.</p>
+
+<pre>
+export NAME="My First Experiment"
+quicksplit create --name $NAME
+</pre>
+		</div>
+		</div>
+		</div>
+
+	<div class="row">
+	<div class="col-md-6 col-md-offset-3">
+	<div class="section">
+		<h3>Pricing</h3>
+		<hr>
+		<p>Currently, we only offer free plans. Free plans are limited to 1,000 exposures per experiment and 1 active experiment per user.</p>
+	</div>
+	</div>
+	</div>
+
+	<div class="row">
+	<div class="col-md-6 col-md-offset-3">
+	<div class="section">
+		<h3>Frequently asked questions</h3>
+		<hr>
+		<p>Is 1,000 exposures per experiment really enough? TLDR: Yes, it's probably enough.</p>
+	</div>
+	</div>
+	</div>
+	</div>
 </body>
 </html>
