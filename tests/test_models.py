@@ -19,10 +19,22 @@ def test_user_create(db):
 
 def test_experiment_create(user, db):
     experiment = Experiment(user=user, name="Test experiment")
+    experiment.activate()
     db.session.add(experiment)
     db.session.commit()
     assert experiment.user == user
     assert experiment in user.experiments.all()
+    assert experiment.active == True
+
+
+def test_experiment_acivate_deactivate(user, db, experiment):
+    db.session.add(experiment)
+    db.session.commit()
+    assert experiment.active == True
+    experiment.deactivate()
+    assert experiment.active == False
+    experiment.activate()
+    assert experiment.active == True
 
 
 def test_subject_create(user, db):

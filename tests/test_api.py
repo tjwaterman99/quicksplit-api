@@ -115,6 +115,22 @@ def test_conversion_post(client, experiment_name, subject_id):
     assert resp.status_code == 200
 
 
+def test_deactivation_post(client, experiment_name):
+    resp = client.post('/deactivate',  data={
+        'experiment': experiment_name
+    })
+    assert resp.status_code == 200
+    assert resp.json()['data']['active'] == False
+
+
+def test_activation_post(client, experiment_name):
+    resp = client.post('/activate',  data={
+        'experiment': experiment_name
+    })
+    assert resp.status_code == 200
+    assert resp.json()['data']['active'] == True
+
+
 def test_logging_out(client):
     client.logout()
     resp = client.get('/experiments')

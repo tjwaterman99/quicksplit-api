@@ -113,3 +113,37 @@ def experiments(ctx):
         print(resp.json()['data'])
     else:
         print("Failed to load experiments.")
+
+
+@base.command()
+@click.option('--name', required=True)
+@click.pass_context
+def start(ctx, name):
+    """
+    Start a stopped experiment
+    """
+
+    resp = ctx.obj.post('/activate', json={'experiment': name})
+    if resp.ok:
+        print(f"Started experiment {resp.json()['data']['name']}")
+    elif resp.status_code == 404:
+        print("Couldn't find that experiment. Please check its name.")
+    else:
+        print("Starting experiment failed. Please try again.")
+
+
+@base.command()
+@click.option('--name', required=True)
+@click.pass_context
+def stop(ctx, name):
+    """
+    Stop an active experiment
+    """
+
+    resp = ctx.obj.post('/deactivate', json={'experiment': name})
+    if resp.ok:
+        print(f"Stopped experiment {resp.json()['data']['name']}")
+    elif resp.status_code == 404:
+        print("Couldn't find that experiment. Please check its name.")
+    else:
+        print("Stopping experiment failed. Please try again.")

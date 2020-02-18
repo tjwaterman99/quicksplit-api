@@ -1,6 +1,7 @@
 import random
 import os
 import uuid
+import datetime as dt
 
 import pytest
 import sqlalchemy
@@ -75,7 +76,7 @@ def user(db, account, token, email):
 
 @pytest.fixture()
 def experiment(db, user):
-    experiment = Experiment(user=user, name="Test Experiment")
+    experiment = Experiment(user=user, name="Test Experiment", active=True, last_activated_at=dt.datetime.now())
     db.session.add(experiment)
     return experiment
 

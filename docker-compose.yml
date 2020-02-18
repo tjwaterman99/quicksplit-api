@@ -38,6 +38,23 @@ services:
       DATABASE_URL: postgresql://developer:notsecret@postgres:5432/development
     depends_on:
       - web
+      - postgres
+    volumes:
+      - type: bind
+        source: ./app
+        target: /app
+      - type: bind
+        source: ./tests
+        target: /tests
+      - type: bind
+        source: ./migrations
+        target: /migrations
+      - type: bind
+        source: ./cli/cli
+        target: /cli
+      - type: bind
+        source: ./cli/setup.py
+        target: /setup.py
   postgres:
     image: postgres:12-alpine
     environment:

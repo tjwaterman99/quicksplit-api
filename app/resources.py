@@ -83,6 +83,7 @@ class ExperimentsResource(Resource):
     def post(self):
         name = request.json['name']
         experiment = Experiment(user=g.user, name=name)
+        experiment.activate()
         db.session.add(experiment)
         db.session.commit()
         return experiment
@@ -109,6 +110,9 @@ class ExposuresResource(Resource):
 
         if experiment.full:
             abort(422, "Experiment has reached max exposures limit")
+
+        if not experiment.active:
+            abort(422, "Experiment is not active")
 
         subject_insert = insert(Subject.__table__).values(
             id=subject_id,
@@ -164,6 +168,32 @@ class ResultsResource(Resource):
         return experiment
 
 
+class ActivateResource(Resource):
+
+    @protected
+    def post(self):
+        experiment_name = request.json['experiment']
+        experiment = g.user.experiments.filter(Experiment.name==experiment_name).first()
+        if not experiment:
+            abort(404, "Experiment does not exist")
+        experiment.activate()
+        db.session.commit()
+        return experiment
+
+
+class DeactivateResource(Resource):
+
+    @protected
+    def post(self):
+        experiment_name = request.json['experiment']
+        experiment = g.user.experiments.filter(Experiment.name==experiment_name).first()
+        if not experiment:
+            abort(404, "Experiment does not exist")
+        experiment.deactivate()
+        db.session.commit()
+        return experiment
+
+
 api.add_resource(IndexResource, '/')
 api.add_resource(UserResource, '/user')
 api.add_resource(ExperimentsResource, '/experiments')
@@ -172,3 +202,5 @@ api.add_resource(ExposuresResource, '/exposures')
 api.add_resource(ConversionsResource, '/conversions')
 api.add_resource(ResultsResource, '/results')
 api.add_resource(LoginResource, '/login')
+api.add_resource(ActivateResource, '/activate')
+api.add_resource(DeactivateResource, '/deactivate')

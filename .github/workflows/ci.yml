@@ -37,3 +37,4 @@ jobs:
         if: github.ref == 'refs/heads/master'
       - name: Test CLI against Heroku staging
         run: docker-compose run --rm -e QUICKSPLIT_API_URL=https://quick-split.herokuapp.com web pytest tests/test_cli.py
+        if: github.ref == 'refs/heads/master'

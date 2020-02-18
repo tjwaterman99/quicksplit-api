@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import uuid
+import datetime as dt
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
@@ -21,11 +22,13 @@ class Plan(TimestampMixin, db.Model):
     name: str
     price_in_cents: int
     max_subjects_per_experiment: int
+    max_active_experiments: int
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = db.Column(db.String(), nullable=False, index=True)
     price_in_cents = db.Column(db.Integer(), nullable=False)
     max_subjects_per_experiment = db.Column(db.Integer(), nullable=False)
+    max_active_experiments = db.Column(db.Integer(), nullable=False)
 
 
 @dataclass
@@ -97,11 +100,15 @@ class Experiment(TimestampMixin, db.Model):
     name: str
     full: bool
     subjects_counter: int
+    active: bool
+    last_activated_at: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'))
     name = db.Column(db.String(length=128), nullable=False)
     subjects_counter = db.Column(db.Integer(), nullable=False, default=0)
+    active = db.Column(db.Boolean(), nullable=False, index=True)
+    last_activated_at = db.Column(db.DateTime(), nullable=False, index=True)
 
     __table_args__ = (db.UniqueConstraint('user_id', 'name'), )
 
@@ -111,6 +118,23 @@ class Experiment(TimestampMixin, db.Model):
     @property
     def full(self):
         return self.subjects_counter >= self.user.account.plan.max_subjects_per_experiment
+
+    def activate(self):
+        if self.active:
+            return
+        active_experiments = self.user.experiments.filter(Experiment.active==True)\
+                                                  .order_by(Experiment.last_activated_at.desc())\
+                                                  .all()
+        if len(active_experiments) >= self.user.account.plan.max_active_experiments:
+            active_experiments[0].deactivate()
+            db.session.add_all(active_experiments)
+        self.active = True
+        self.last_activated_at = dt.datetime.now()
+        db.session.add(self)
+
+    def deactivate(self):
+        self.active = False
+        db.session.add(self)
 
 
 # TODO: subjects should really be attached to an account, not just a user

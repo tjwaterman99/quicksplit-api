@@ -28,6 +28,11 @@ def password():
     return "notsecure"
 
 
+@pytest.fixture(scope='module')
+def experiment_name():
+    return 'mytestexperiment'
+
+
 def test_cli_loads():
     assert subprocess.run('quicksplit').returncode == 0
 
@@ -53,15 +58,31 @@ def test_cli_uses_correct_url():
     assert os.environ['QUICKSPLIT_API_URL'] in resp.stdout.decode()
 
 
-def test_cli_can_create_experiment():
-    cmd = ['quicksplit', 'create', '--name', 'mytestexperiment']
+def test_cli_can_create_experiment(experiment_name):
+    cmd = ['quicksplit', 'create', '--name', experiment_name]
     resp = subprocess.run(cmd, capture_output=True)
     assert resp.returncode == 0
-    assert 'mytestexperiment' in resp.stdout.decode()
+    assert experiment_name in resp.stdout.decode()
 
 
-def test_cli_can_list_experiments():
+def test_cli_can_list_experiments(experiment_name):
     cmd = ['quicksplit', 'experiments']
     resp = subprocess.run(cmd, capture_output=True)
     assert resp.returncode == 0
-    assert 'mytestexperiment' in resp.stdout.decode()
+    assert experiment_name in resp.stdout.decode()
+
+
+def test_cli_can_stop_experiments(experiment_name):
+    cmd = ['quicksplit', 'stop', '--name', experiment_name]
+    resp = subprocess.run(cmd, capture_output=True)
+    assert resp.returncode == 0
+    assert experiment_name in resp.stdout.decode()
+    assert 'Stopped' in resp.stdout.decode()
+
+
+def test_cli_can_start_experiments(experiment_name):
+    cmd = ['quicksplit', 'start', '--name', experiment_name]
+    resp = subprocess.run(cmd, capture_output=True)
+    assert resp.returncode == 0
+    assert experiment_name in resp.stdout.decode()
+    assert 'Started' in resp.stdout.decode()
