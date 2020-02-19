@@ -43,7 +43,7 @@ def database(app):
 
 @pytest.fixture()
 def email():
-    return f"tester+{random.random()}@gmail.com"
+    return f"tester@gmail.com"
 
 
 @pytest.fixture()
