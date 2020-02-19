@@ -29,7 +29,7 @@ def app(dbconn):
     return create_app()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def database(app):
     with app.app_context():
         _db.drop_all()
@@ -51,8 +51,7 @@ def db(database):
     database.session.begin_nested()
     yield database
     database.session.rollback()
-    database.session.close()
-
+    database.session.remove()
 
 
 @pytest.fixture()
@@ -63,6 +62,9 @@ def user(db, email):
     account = Account.create(plan=plan)
     user = User.create(email=email, password="password", token=token, account=account)
     db.session.add(user)
+    db.session.add(token)
+    db.session.add(account)
+    db.session.flush()
     return user
 
 
@@ -70,6 +72,7 @@ def user(db, email):
 def experiment(db, user):
     experiment = Experiment(user=user, name="Test Experiment", active=True, last_activated_at=dt.datetime.now())
     db.session.add(experiment)
+    db.session.flush()
     return experiment
 
 
@@ -77,6 +80,7 @@ def experiment(db, user):
 def subject(db, user):
     subject = Subject(account=user.account, name='test-subject-1')
     db.session.add(subject)
+    db.session.flush()
     return subject
 
 
@@ -84,13 +88,17 @@ def subject(db, user):
 def cohort(db, experiment):
     cohort = Cohort(name='experimental', experiment=experiment)
     db.session.add(cohort)
+    db.session.flush()
     return cohort
 
 
 @pytest.fixture()
-def exposure(db, subject, experiment,  cohort):
+def exposure(db, subject, experiment, cohort):
     exposure = Exposure(subject=subject, experiment=experiment, cohort=cohort)
+    experiment.subjects_counter += 1
     db.session.add(exposure)
+    db.session.add(experiment)
+    db.session.flush()
     return exposure
 
 
@@ -98,6 +106,7 @@ def exposure(db, subject, experiment,  cohort):
 def conversion(db, exposure):
     conversion = Conversion(exposure=exposure, value=30.0)
     db.session.add(conversion)
+    db.session.flush()
     return conversion
 
 

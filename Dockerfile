@@ -10,7 +10,11 @@ RUN pip install flask \
 								psycopg2-binary \
 								pytest \
 								gunicorn \
-								requests
+								requests \
+								pandas \
+								statsmodels \
+								researchpy \
+								terminaltables
 
 COPY ./app /app
 COPY ./tests /tests

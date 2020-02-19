@@ -2,9 +2,19 @@ import click
 import os
 import sys
 
+from terminaltables import SingleTable
 
 from cli.config import Config
 from cli.client import Client
+
+
+def tableify(headers, rows):
+    data = [headers]
+    for row in rows:
+        row = [str(item) if item != None else '' for item in row]
+        data.append(row)
+    table = SingleTable(data)
+    print(table.table)
 
 
 @click.group()
@@ -147,3 +157,27 @@ def stop(ctx, name):
         print("Couldn't find that experiment. Please check its name.")
     else:
         print("Stopping experiment failed. Please try again.")
+
+
+@base.command()
+@click.option('--name', required=True)
+@click.pass_context
+def results(ctx, name):
+    """
+    Print the results of an experimence
+    """
+
+    resp = ctx.obj.get('/results', json={'experiment': name})
+    if resp.ok:
+        tableify(
+            resp.json()['data']['table']['columns'],
+            resp.json()['data']['table']['data']
+        )
+    elif resp.status_code == 404:
+        print("Couldn't find that experiment. Please check its name.")
+    elif resp.status_code == 403:
+        print("Access denied. Please log in.")
+    elif resp.status_code == 400:
+        print("Experiment has not received any events. Please confirm your logging is working.")
+    else:
+        print("An unexpected error occured. Please try again later.")

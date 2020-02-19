@@ -105,6 +105,7 @@ class User(TimestampMixin, db.Model):
         token.account = account
         db.session.add(user)
         db.session.add(token)
+        db.session.flush()
         return user
 
 
@@ -144,10 +145,12 @@ class Experiment(TimestampMixin, db.Model):
         self.active = True
         self.last_activated_at = dt.datetime.now()
         db.session.add(self)
+        db.session.flush()
 
     def deactivate(self):
         self.active = False
         db.session.add(self)
+        db.session.flush()
 
 
 class Subject(TimestampMixin, db.Model):

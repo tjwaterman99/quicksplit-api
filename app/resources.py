@@ -5,7 +5,7 @@ from flask_restful import Api, Resource
 from sqlalchemy.dialects.postgresql import insert
 
 from app.models import db, Account, User, Token, Experiment, Subject, Conversion, Exposure, Role, Cohort
-
+from app.services import ExperimentResultCalculator
 
 api = Api()
 
@@ -62,7 +62,6 @@ class UserResource(Resource):
         user = User.create(email=email, password=password, account=account,
                            token=token)
         db.session.add(user)
-        db.session.commit()
         return user
 
 
@@ -90,7 +89,6 @@ class ExperimentsResource(Resource):
         experiment = Experiment(user=g.user, name=name)
         experiment.activate()
         db.session.add(experiment)
-        db.session.commit()
         return experiment
 
 
@@ -149,7 +147,6 @@ class ExposuresResource(Resource):
         if exposure_id:
             experiment.subjects_counter = Experiment.subjects_counter + 1
             db.session.add(experiment)
-        db.session.commit()
 
 
 class ConversionsResource(Resource):
@@ -158,15 +155,28 @@ class ConversionsResource(Resource):
     def post(self):
         experiment_name = str(request.json['experiment'])
         subject_name = str(request.json['subject'])
-        value = float(request.json['value']) or None
+
+        # Allow users to not supply a value
+        _value = request.json.get('value')
+        if _value is not None:
+            value = float(_value)
+        else:
+            value = None
 
         experiment = g.user.experiments.filter(Experiment.name==experiment_name).first()
         if not experiment:
             abort(422, "Experiment does not exist")
 
-        exposure = experiment.exposures.filter(Subject.name==subject_name).first()
+        subject = Subject.query.filter(Subject.name==subject_name)\
+                               .filter(Subject.account==experiment.user.account)\
+                               .first()
+        if not subject:
+            abort(422, "Subject does not exist")
+        exposure = Exposure.query.filter(Exposure.subject_id==subject.id)\
+                                 .filter(Exposure.experiment_id==experiment.id)\
+                                 .first()
         if not exposure:
-            abort(422, "Subject does not have an exposure yet")
+            abort(422, "Subject does not have an exposure for that experiment yet")
 
         conversion_insert = insert(Conversion.__table__).values(
             exposure_id=exposure.id,
@@ -176,7 +186,6 @@ class ConversionsResource(Resource):
             set_={'updated_at': dt.datetime.now()}
         )
         db.session.execute(conversion_insert)
-        db.session.commit()
 
 
 class ResultsResource(Resource):
@@ -188,7 +197,21 @@ class ResultsResource(Resource):
         experiment = g.user.experiments.filter(Experiment.name==experiment_name).first()
         if not experiment:
             abort(404, "Experiment does not exist")
-        return experiment
+        if experiment.subjects_counter == 0:
+            abort(400, "Experiment has not collected any data")
+        erc = ExperimentResultCalculator(experiment)
+        erc.load_exposures()
+
+        anova = erc.anova()
+        table = erc._summary_table()
+        results = {
+            'experiment': experiment.name,
+            'table': table.reset_index().to_dict(orient='split'),
+            'p-value': anova.f_pvalue,
+            'significant': bool(anova.f_pvalue < 0.1),
+            'subjects': int(anova.nobs)
+        }
+        return results
 
 
 class ActivateResource(Resource):
@@ -200,7 +223,6 @@ class ActivateResource(Resource):
         if not experiment:
             abort(404, "Experiment does not exist")
         experiment.activate()
-        db.session.commit()
         return experiment
 
 
@@ -213,7 +235,6 @@ class DeactivateResource(Resource):
         if not experiment:
             abort(404, "Experiment does not exist")
         experiment.deactivate()
-        db.session.commit()
         return experiment
 
 

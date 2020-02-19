@@ -7,16 +7,11 @@ def test_root_index(client):
 
 
 def test_user_get(db, client, user):
-    db.session.add(user)
-    db.session.commit()
     resp = client.get('/user')
     assert resp.status_code == 200
-    assert User.query.get(resp.json['data']['id']) == user
 
 
 def test_user_unauthorized_get(db, user, app):
-    db.session.add(user)
-    db.session.commit()
     client = app.test_client()
     resp = client.get('/user')
     assert resp.status_code == 403
@@ -30,13 +25,9 @@ def test_user_post(db, app):
     })
 
     assert resp.status_code == 200
-    user = User.query.get(resp.json['data']['id'])
-    assert user is not None
 
 
 def test_experiment_get(db, client, experiment):
-    db.session.add(experiment)
-    db.session.commit()
     resp = client.get('/experiments')
     assert resp.status_code == 200
     assert type(resp.json['data']) == list
@@ -45,8 +36,6 @@ def test_experiment_get(db, client, experiment):
 
 
 def test_experiment_id_get(db, client, experiment):
-    db.session.add(experiment)
-    db.session.commit()
     resp = client.get(f'/experiments/{str(experiment.id)}')
     assert resp.status_code == 200
     assert resp.json['data']['id'] == str(experiment.id)
@@ -74,7 +63,6 @@ def test_experiment_post_over_active_limits(db, client, user):
 
 def test_exposures_post(db, client, experiment, subject, cohort):
     db.session.add_all([experiment])
-    db.session.commit()
     resp = client.post('/exposures', json={
         'experiment': experiment.name,
         'subject': subject.name,
@@ -86,7 +74,6 @@ def test_exposures_post(db, client, experiment, subject, cohort):
 
 def test_exposures_post_duplicate(db, client, experiment, cohort, subject):
     db.session.add(experiment)
-    db.session.commit()
     resp = client.post('/exposures', json={
         'experiment': experiment.name,
         'subject': subject.name,
@@ -110,7 +97,6 @@ def test_exposures_post_duplicate_subject(db, client, experiment, subject, cohor
     experiment2 = Experiment(name=experiment2_name, user=experiment.user)
     experiment2.activate()
     db.session.add_all([experiment, experiment2, subject, cohort])
-    db.session.commit()
     resp = client.post('/exposures', json={
         'experiment': experiment.name,
         'subject': subject.name,
@@ -133,7 +119,6 @@ def test_exposures_post_duplicate_subject(db, client, experiment, subject, cohor
 def test_exposures_post_subject_limits(db, client, experiment, subject, cohort):
     experiment.user.account.plan.max_subjects_per_experiment = 1
     db.session.add_all([experiment, subject, cohort])
-    db.session.commit()
 
     resp = client.post('/exposures', json={
         'experiment': experiment.name,
@@ -151,12 +136,13 @@ def test_exposures_post_subject_limits(db, client, experiment, subject, cohort):
     assert experiment.exposures.count() == 1
     assert experiment.subjects_counter == 1
     assert experiment.user.account.subjects.count() == 1
+    experiment.user.account.plan.max_subjects_per_experiment = 3000
+    db.session.add(experiment)
 
 
 def test_exposures_post_inactive_experiment(db, client, experiment):
     experiment.deactivate()
     db.session.add(experiment)
-    db.session.commit()
     resp = client.post('/exposures', json={
         'experiment': experiment.name,
         'subject': 'subject_name',
@@ -170,7 +156,6 @@ def test_exposures_post_inactive_experiment(db, client, experiment):
 
 def test_conversions_post(db, client, experiment, subject, exposure):
     db.session.add(exposure)
-    db.session.commit()
     resp = client.post('/conversions', json={
         'experiment': experiment.name,
         'subject': subject.name,
@@ -185,7 +170,6 @@ def test_conversions_post(db, client, experiment, subject, exposure):
 def test_conversions_post_duplicate(db, client, experiment, exposure, subject):
     db.session.add(experiment)
     db.session.add(exposure)
-    db.session.commit()
     resp = client.post('/conversions', json={
         'experiment': experiment.name,
         'subject': subject.name,
@@ -211,8 +195,6 @@ def test_conversions_post_inactive_experiment(db, client, experiment, exposure, 
     # This won't update the subjects counter on the experiment. We should
     # Really move the business logic from the resource to the model
     experiment.deactivate()
-    db.session.add_all([experiment, exposure])
-    db.session.commit()
     resp = client.post('/conversions', json={
         'experiment': experiment.name,
         'subject': subject.name,
@@ -223,19 +205,16 @@ def test_conversions_post_inactive_experiment(db, client, experiment, exposure, 
     assert exposure.conversion.value == conversion.value
 
 
-def test_results_get(db, client, experiment):
-    db.session.add(experiment)
-    db.session.commit()
+def test_results_get(db, client, experiment, exposure):
     resp = client.get('/results', json={
         'experiment': experiment.name
     })
     assert resp.status_code == 200
-    assert resp.json['data']['id'] == str(experiment.id)
+    assert resp.json['data']['experiment'] == str(experiment.name)
 
 
 def test_activation_resources(db, client, experiment):
     db.session.add(experiment)
-    db.session.commit()
     resp = client.post('/deactivate', json={
         'experiment': experiment.name
     })
