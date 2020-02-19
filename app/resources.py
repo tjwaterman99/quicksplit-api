@@ -146,7 +146,6 @@ class ExposuresResource(Resource):
         ).on_conflict_do_nothing().returning(Exposure.id)
 
         exposure_id = db.session.execute(exposure_insert).fetchone()
-        print(subject_id)
         if exposure_id:
             experiment.subjects_counter = Experiment.subjects_counter + 1
             db.session.add(experiment)
