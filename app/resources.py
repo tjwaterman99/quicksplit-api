@@ -1,8 +1,10 @@
+import datetime as dt
+
 from flask import request, g, abort, current_app, make_response, json
 from flask_restful import Api, Resource
 from sqlalchemy.dialects.postgresql import insert
 
-from app.models import db, Account, User, Token, Experiment, Subject, Conversion, Exposure
+from app.models import db, Account, User, Token, Experiment, Subject, Conversion, Exposure, Role, Cohort
 
 
 api = Api()
@@ -29,11 +31,13 @@ def protected(function):
 
 
 def load_user():
-    token = request.headers.get('Authorization')
-    if token:
-        # If they provide an invalid token, this will raise an error since
-        # the query will return None, which doesn't have a .user attribute
-        g.user = Token.query.get(token).user
+    token_value = request.headers.get('Authorization')
+    if token_value:
+        token = Token.query.filter(Token.value==token_value).first()
+        if token:
+            g.user = token.user
+        else:
+            g.user = None
     else:
         g.user = None
 
@@ -53,7 +57,8 @@ class UserResource(Resource):
         email = request.json['email']
         password = request.json['password']
         account = Account.create()
-        token = Token()
+        role = Role.query.filter(Role.name=="admin").first()
+        token = Token(role=role)
         user = User.create(email=email, password=password, account=account,
                            token=token)
         db.session.add(user)
@@ -68,7 +73,7 @@ class LoginResource(Resource):
         password = request.json['password']
         user = User.query.filter(User.email==email).first()
         if user.check_password(password):
-            return user.token
+            return user.tokens[0]
         else:
             abort(403)
 
@@ -101,8 +106,9 @@ class ExposuresResource(Resource):
     # We might consider moving this object into a Exposure.create method
     @protected
     def post(self):
-        experiment_name = request.json['experiment']
-        subject_id = str(request.json['subject_id'])
+        experiment_name = str(request.json['experiment'])
+        subject_name = str(request.json['subject'])
+        cohort_name = str(request.json['cohort'])
 
         experiment = g.user.experiments.filter(Experiment.name==experiment_name).first()
         if not experiment:
@@ -115,18 +121,33 @@ class ExposuresResource(Resource):
             abort(422, "Experiment is not active")
 
         subject_insert = insert(Subject.__table__).values(
-            id=subject_id,
-            user_id=g.user.id
-        ).on_conflict_do_nothing().returning(Subject.id, Subject.user_id)
+            account_id=g.user.account_id,
+            name=subject_name
+        ).on_conflict_do_update(
+            constraint='subject_account_id_name_key',
+            set_={'updated_at': dt.datetime.now()}
+        ).returning(Subject.id)
+
+        cohort_insert = insert(Cohort.__table__).values(
+            name=cohort_name,
+            experiment_id=experiment.id,
+        ).on_conflict_do_update(
+            constraint='cohort_experiment_id_name_key',
+            set_={'updated_at': dt.datetime.now()}
+        ).returning(Cohort.id)
+
+        subject_id = db.session.execute(subject_insert).fetchone()[0]
+        cohort_id = db.session.execute(cohort_insert).fetchone()[0]
+
         exposure_insert = insert(Exposure.__table__).values(
             experiment_id=experiment.id,
             subject_id=subject_id,
-            user_id=g.user.id
-        ).on_conflict_do_nothing()
+            cohort_id=cohort_id
+        ).on_conflict_do_nothing().returning(Exposure.id)
 
-        inserted_subject = db.session.execute(subject_insert).fetchone()
-        db.session.execute(exposure_insert)
-        if inserted_subject:
+        exposure_id = db.session.execute(exposure_insert).fetchone()
+        print(subject_id)
+        if exposure_id:
             experiment.subjects_counter = Experiment.subjects_counter + 1
             db.session.add(experiment)
         db.session.commit()
@@ -136,22 +157,25 @@ class ConversionsResource(Resource):
 
     @protected
     def post(self):
-        experiment_name = request.json['experiment']
-        subject_id = str(request.json['subject_id'])
+        experiment_name = str(request.json['experiment'])
+        subject_name = str(request.json['subject'])
+        value = float(request.json['value']) or None
 
         experiment = g.user.experiments.filter(Experiment.name==experiment_name).first()
         if not experiment:
             abort(422, "Experiment does not exist")
 
-        exposure = experiment.exposures.filter(Subject.id==subject_id).first()
+        exposure = experiment.exposures.filter(Subject.name==subject_name).first()
         if not exposure:
             abort(422, "Subject does not have an exposure yet")
 
         conversion_insert = insert(Conversion.__table__).values(
-            experiment_id=experiment.id,
-            subject_id=subject_id,
-            user_id=g.user.id
-        ).on_conflict_do_nothing()
+            exposure_id=exposure.id,
+            value=value
+        ).on_conflict_do_update(
+            constraint='conversion_exposure_id_key',
+            set_={'updated_at': dt.datetime.now()}
+        )
         db.session.execute(conversion_insert)
         db.session.commit()
 

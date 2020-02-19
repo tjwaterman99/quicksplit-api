@@ -7,8 +7,8 @@ import pytest
 import sqlalchemy
 
 from app import create_app
-from app.models import db as _db, Plan, Account, User, Subject, Experiment, Exposure, Conversion, Token
-from app.seeds import plans
+from app.models import db as _db, Role, Plan, Account, User, Subject, Experiment, Exposure, Conversion, Token, Cohort
+from app.seeds import plans, roles
 
 
 os.environ.setdefault('QUICKSPLIT_API_URL', 'http://web:5000')
@@ -35,9 +35,15 @@ def database(app):
         _db.drop_all()
         _db.create_all()
         _db.session.add_all(plans)
+        _db.session.add_all(roles)
         _db.session.commit()
         yield _db
         _db.drop_all()
+
+
+@pytest.fixture()
+def email():
+    return f"tester+{random.random()}@gmail.com"
 
 
 @pytest.fixture()
@@ -48,28 +54,14 @@ def db(database):
     database.session.close()
 
 
-@pytest.fixture()
-def account(db):
-    plan = Plan.query.filter(Plan.price_in_cents==0).first()
-    account = Account(plan=plan)
-    db.session.add(account)
-    return account
-
 
 @pytest.fixture()
-def token(db):
-    return Token(id=uuid.uuid4())
-
-
-@pytest.fixture()
-def email():
-    return f"tester+{random.random()}@gmail.com"
-
-
-@pytest.fixture()
-def user(db, account, token, email):
-    db.session.add(token)
-    user = User.create(account=account, email=email, password="password", token=token)
+def user(db, email):
+    plan = Plan.query.filter(Plan.name=="free").first()
+    role = Role.query.filter(Role.name=="admin").first()
+    token = Token(role=role, value=uuid.uuid4())
+    account = Account.create(plan=plan)
+    user = User.create(email=email, password="password", token=token, account=account)
     db.session.add(user)
     return user
 
@@ -82,22 +74,29 @@ def experiment(db, user):
 
 
 @pytest.fixture()
-def subject(db, experiment):
-    subject = Subject(user=experiment.user, id='test-subject-1')
+def subject(db, user):
+    subject = Subject(account=user.account, name='test-subject-1')
     db.session.add(subject)
     return subject
 
 
 @pytest.fixture()
-def exposure(db, subject, experiment,  user):
-    exposure = Exposure(subject=subject, experiment=experiment, user=user)
+def cohort(db, experiment):
+    cohort = Cohort(name='experimental', experiment=experiment)
+    db.session.add(cohort)
+    return cohort
+
+
+@pytest.fixture()
+def exposure(db, subject, experiment,  cohort):
+    exposure = Exposure(subject=subject, experiment=experiment, cohort=cohort)
     db.session.add(exposure)
     return exposure
 
 
 @pytest.fixture()
-def conversion(db, subject, experiment,  user):
-    conversion = Conversion(subject=subject, experiment=experiment, user=user)
+def conversion(db, exposure):
+    conversion = Conversion(exposure=exposure, value=30.0)
     db.session.add(conversion)
     return conversion
 
@@ -105,5 +104,5 @@ def conversion(db, subject, experiment,  user):
 @pytest.fixture()
 def client(db, app, user):
     client = app.test_client()
-    client.environ_base['HTTP_AUTHORIZATION'] = f"{user.token.id}"
+    client.environ_base['HTTP_AUTHORIZATION'] = f"{user.tokens[0].value}"
     return client

@@ -12,8 +12,8 @@ db = SQLAlchemy()
 
 
 class TimestampMixin(object):
-    created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False)
-    updated_at = db.Column(db.DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
 
 @dataclass
@@ -37,7 +37,6 @@ class Account(TimestampMixin, db.Model):
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     plan_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=False)
-    users = db.relationship('User', lazy="dynamic")
 
     plan = db.relationship('Plan', backref='accounts', lazy="joined")
 
@@ -48,35 +47,49 @@ class Account(TimestampMixin, db.Model):
         return account
 
 
+# Should have roles for admin, logger
+@dataclass
+class Role(TimestampMixin, db.Model):
+    id: str
+    name: str
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = db.Column(db.String(length=16), unique=True, index=True, nullable=False)
+
+
 @dataclass
 class Token(TimestampMixin, db.Model):
     id: str
+    value: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False)
+    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False)
+    role_id = db.Column(UUID(as_uuid=True), db.ForeignKey('role.id'), nullable=False)
+    value = db.Column(UUID(as_uuid=True), unique=True, index=True, default=uuid.uuid4)
+
+    role = db.relationship('Role', lazy='joined')
+    account = db.relationship('Account', lazy='joined')
 
 
 @dataclass
 class User(TimestampMixin, db.Model):
     id: str
-    token: Token
+    tokens: Token
     email: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'))
+
     email = db.Column(db.String(length=128), nullable=False, unique=True)
     password_hash = db.Column(db.String(length=128), nullable=False)
 
-    token = db.relationship('Token', lazy='joined', backref='user', uselist=False, cascade='delete')
-    account = db.relationship('Account', lazy='joined')
+    tokens = db.relationship('Token', lazy='joined', backref='user', cascade='delete')
+    account = db.relationship('Account', lazy='joined', backref=db.backref('users', lazy='dynamic'))
     experiments = db.relationship('Experiment', lazy='dynamic', backref="user", cascade='delete')
-    subjects = db.relationship('Subject', lazy='dynamic', backref='user', cascade='delete')
-    exposures = db.relationship('Exposure', lazy='dynamic', backref='user', cascade='delete',
-                                primaryjoin='User.id==Exposure.user_id',
-                                foreign_keys='Exposure.user_id')
-    conversions = db.relationship('Conversion', lazy='dynamic', backref='user', cascade='delete',
-                                  primaryjoin='User.id==Conversion.user_id',
-                                  foreign_keys='Conversion.user_id')
+
+    def __hash__(self):
+        return hash(str(self.id))
 
     def set_password_hash(self, password):
         self.password_hash = generate_password_hash(password)
@@ -86,17 +99,19 @@ class User(TimestampMixin, db.Model):
 
     @classmethod
     def create(cls, email, password, account, token):
-        db.session.add(token)
         user = cls(email=email, account=account)
         user.set_password_hash(password)
-        user.token = token
+        user.tokens.append(token)
+        token.account = account
+        db.session.add(user)
+        db.session.add(token)
         return user
 
 
-# TODO: add relationship to subjects thru the exposures table
 @dataclass
 class Experiment(TimestampMixin, db.Model):
     id: str
+    user_id: str
     name: str
     full: bool
     subjects_counter: int
@@ -104,16 +119,14 @@ class Experiment(TimestampMixin, db.Model):
     last_activated_at: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'))
-    name = db.Column(db.String(length=128), nullable=False)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(length=64), index=True)
+
     subjects_counter = db.Column(db.Integer(), nullable=False, default=0)
     active = db.Column(db.Boolean(), nullable=False, index=True)
-    last_activated_at = db.Column(db.DateTime(), nullable=False, index=True)
+    last_activated_at = db.Column(db.DateTime(timezone=True), nullable=False, index=True)
 
     __table_args__ = (db.UniqueConstraint('user_id', 'name'), )
-
-    exposures = db.relationship('Exposure', lazy='dynamic', backref='experiment', cascade='delete')
-    conversions = db.relationship('Conversion', lazy='dynamic', backref='experiment', cascade='delete')
 
     @property
     def full(self):
@@ -137,34 +150,49 @@ class Experiment(TimestampMixin, db.Model):
         db.session.add(self)
 
 
-# TODO: subjects should really be attached to an account, not just a user
 class Subject(TimestampMixin, db.Model):
-    id = db.Column(db.String(length=64), primary_key=True)
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), primary_key=True)
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False)
+    name = db.Column(db.String(length=64), nullable=False, index=True)
 
-    exposures = db.relationship('Exposure', lazy='dynamic', backref='subject', cascade='delete',
-                                primaryjoin='and_(Subject.user_id==Exposure.user_id, Subject.id==Exposure.subject_id)',
-                                foreign_keys='Exposure.subject_id')
+    __table_args__ = (db.UniqueConstraint('account_id', 'name'), )
 
-    conversions = db.relationship('Conversion', lazy='dynamic', backref='subject', cascade='delete',
-                                primaryjoin='and_(Subject.user_id==Conversion.user_id, Subject.id==Conversion.subject_id)',
-                                foreign_keys='Conversion.subject_id')
+    account = db.relationship('Account', backref=db.backref('subjects', lazy='dynamic'))
+
+
+class Cohort(TimestampMixin, db.Model):
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), nullable=False)
+    name = db.Column(db.String(length=64), nullable=False, index=True)
+
+    experiment = db.relationship('Experiment', backref='cohorts')
+
+    __table_args__ = (db.UniqueConstraint('experiment_id', 'name'), )
 
 
 @dataclass
 class Exposure(TimestampMixin, db.Model):
-    experiment_id: str
-    subject_id: str
-    user_id: str
+    id: str
 
-    experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), primary_key=True)
-    subject_id = db.Column(db.String(length=64), primary_key=True)
-    user_id = db.Column(UUID(as_uuid=True), primary_key=True)
-    db.ForeignKeyConstraint(['subject_id', 'user_id'], ['subject.id', 'user.id'], name='subject_id_user_id_fkey')
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    cohort_id = db.Column(UUID(as_uuid=True), db.ForeignKey('cohort.id'), nullable=False)
+    subject_id = db.Column(UUID(as_uuid=True), db.ForeignKey('subject.id'), nullable=False)
+    experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), nullable=False)
+
+    __table_args__ = (db.UniqueConstraint('subject_id', 'experiment_id'), )
+
+    cohort = db.relationship('Cohort', backref=db.backref('exposures', lazy='dynamic'))
+    subject = db.relationship('Subject', backref=db.backref('exposures', lazy='dynamic'))
+    experiment = db.relationship('Experiment', backref=db.backref('exposures', lazy='dynamic'))
+    conversion = db.relationship('Conversion', backref=db.backref('exposure', uselist=False), uselist=False)
+
+    def __hash__(self):
+        return hash(str(self.id))
 
 
 class Conversion(TimestampMixin, db.Model):
-    experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), primary_key=True)
-    subject_id = db.Column(db.String(length=64), primary_key=True)
-    user_id = db.Column(UUID(as_uuid=True), primary_key=True)
-    db.ForeignKeyConstraint(['subject_id', 'user_id'], ['subject.id', 'user.id'], name='subject_id_user_id_fkey')
+    id: str
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    exposure_id = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id'), nullable=False, unique=True)
+    value = db.Column(db.Float())

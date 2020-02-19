@@ -60,8 +60,13 @@ def experiment_name():
 
 
 @pytest.fixture(scope='module')
-def subject_id():
+def subject_name():
     return random.random()
+
+
+@pytest.fixture(scope='module')
+def cohort_name():
+    return 'experimental'
 
 
 def test_api_status(client):
@@ -75,8 +80,8 @@ def test_user_registration(client, email, password):
         'password': password
     })
     assert resp.status_code == 200
-    assert resp.json()['data']['token']['id'] is not None
-    client.token = resp.json()['data']['token']['id']
+    assert resp.json()['data']['tokens'][0] is not None
+    client.token = resp.json()['data']['tokens'][0]['value']
 
 
 def test_user_get(client):
@@ -99,18 +104,20 @@ def test_experiments_get(client, experiment_name):
     assert resp.json()['data'][0]['name'] == experiment_name
 
 
-def test_exposure_post(client, experiment_name, subject_id):
+def test_exposure_post(client, experiment_name, subject_name, cohort_name):
     resp = client.post('/exposures', data={
-        'subject_id': subject_id,
-        'experiment': experiment_name
+        'subject': subject_name,
+        'experiment': experiment_name,
+        'cohort': cohort_name
     })
     assert resp.status_code == 200
 
 
-def test_conversion_post(client, experiment_name, subject_id):
+def test_conversion_post(client, experiment_name, subject_name):
     resp = client.post('/conversions', data={
-        'subject_id': subject_id,
-        'experiment': experiment_name
+        'subject': subject_name,
+        'experiment': experiment_name,
+        'value': 60.0
     })
     assert resp.status_code == 200
 
