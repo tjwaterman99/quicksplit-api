@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import uuid
 import datetime as dt
 
+from flask import g, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID
@@ -47,29 +48,49 @@ class Account(TimestampMixin, db.Model):
         return account
 
 
-# Should have roles for admin, logger
 @dataclass
 class Role(TimestampMixin, db.Model):
     id: str
     name: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = db.Column(db.String(length=16), unique=True, index=True, nullable=False)
+    name = db.Column(db.String(length=16), index=True, nullable=False, unique=True)
+
+
+@dataclass
+class Scope(TimestampMixin, db.Model):
+    id: str
+    name: str
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = db.Column(db.String(length=16), index=True, nullable=False, unique=True)
 
 
 @dataclass
 class Token(TimestampMixin, db.Model):
     id: str
     value: str
+    policy: str
+    private: bool
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False)
     account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False)
     role_id = db.Column(UUID(as_uuid=True), db.ForeignKey('role.id'), nullable=False)
+    scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
     value = db.Column(UUID(as_uuid=True), unique=True, index=True, default=uuid.uuid4)
 
-    role = db.relationship('Role', lazy='joined')
     account = db.relationship('Account', lazy='joined')
+    role = db.relationship('Role', lazy='joined')
+    scope = db.relationship('Scope', lazy="joined")
+
+    @property
+    def policy(self):
+        return self.role.name
+
+    @property
+    def private(self):
+        return self.role.name in ['admin']
 
 
 @dataclass
@@ -77,6 +98,7 @@ class User(TimestampMixin, db.Model):
     id: str
     tokens: Token
     email: str
+    admin_token: Token
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'))
@@ -97,16 +119,33 @@ class User(TimestampMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    def set_tokens(self):
+        for role in Role.query.all():
+            for scope in Scope.query.all():
+                token = Token(scope=scope, role=role, user=self, account=self.account)
+                db.session.add(token)
+
+    @property
+    def admin_token(self):
+        for token in self.tokens:
+            if token.role.name == "admin" and token.scope.name == "production":
+                return token
+
     @classmethod
-    def create(cls, email, password, account, token):
+    def create(cls, email, password, account):
         user = cls(email=email, account=account)
         user.set_password_hash(password)
-        user.tokens.append(token)
-        token.account = account
+        user.set_tokens()
         db.session.add(user)
-        db.session.add(token)
         db.session.flush()
         return user
+
+    def has_role(self, role: str):
+        for token in self.tokens:
+            if role == token.role.name:
+                return True
+        else:
+            return False
 
 
 @dataclass
@@ -123,11 +162,25 @@ class Experiment(TimestampMixin, db.Model):
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String(length=64), index=True)
 
-    subjects_counter = db.Column(db.Integer(), nullable=False, default=0)
+    # We can make this "production subjects counter" and "staging subjects counter"
+    # The subjects_counter attribute can dynamically select the right field
+    # Depending on the environment of the token (defaulting to production if no request present)
+    # TODO: ensure the resource POST method correctly selects the right subject
+    # counter based on the token's role
+    subjects_counter_production = db.Column(db.Integer(), nullable=False, default=0)
+    subjects_counter_staging = db.Column(db.Integer(), nullable=False, default=0)
     active = db.Column(db.Boolean(), nullable=False, index=True)
     last_activated_at = db.Column(db.DateTime(timezone=True), nullable=False, index=True)
 
     __table_args__ = (db.UniqueConstraint('user_id', 'name'), )
+
+    @property
+    def subjects_counter(self):
+        if not request or g.token.scope.name == 'production':
+            return self.subjects_counter_production
+        else:
+            return self.subjects_counter_staging
+
 
     @property
     def full(self):
@@ -141,7 +194,6 @@ class Experiment(TimestampMixin, db.Model):
                                                   .all()
         if len(active_experiments) >= self.user.account.plan.max_active_experiments:
             active_experiments[0].deactivate()
-            db.session.add_all(active_experiments)
         self.active = True
         self.last_activated_at = dt.datetime.now()
         db.session.add(self)
@@ -156,11 +208,13 @@ class Experiment(TimestampMixin, db.Model):
 class Subject(TimestampMixin, db.Model):
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False)
+    scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
     name = db.Column(db.String(length=64), nullable=False, index=True)
 
-    __table_args__ = (db.UniqueConstraint('account_id', 'name'), )
+    __table_args__ = (db.UniqueConstraint('account_id', 'name', 'scope_id'), )
 
     account = db.relationship('Account', backref=db.backref('subjects', lazy='dynamic'))
+    scope = db.relationship('Scope', lazy='joined')
 
 
 class Cohort(TimestampMixin, db.Model):
@@ -181,13 +235,15 @@ class Exposure(TimestampMixin, db.Model):
     cohort_id = db.Column(UUID(as_uuid=True), db.ForeignKey('cohort.id'), nullable=False)
     subject_id = db.Column(UUID(as_uuid=True), db.ForeignKey('subject.id'), nullable=False)
     experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), nullable=False)
+    scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
 
-    __table_args__ = (db.UniqueConstraint('subject_id', 'experiment_id'), )
+    __table_args__ = (db.UniqueConstraint('subject_id', 'experiment_id', 'scope_id'), )
 
-    cohort = db.relationship('Cohort', backref=db.backref('exposures', lazy='dynamic'))
-    subject = db.relationship('Subject', backref=db.backref('exposures', lazy='dynamic'))
-    experiment = db.relationship('Experiment', backref=db.backref('exposures', lazy='dynamic'))
-    conversion = db.relationship('Conversion', backref=db.backref('exposure', uselist=False), uselist=False)
+    cohort = db.relationship('Cohort', backref=db.backref('exposures', lazy='dynamic'), lazy="joined")
+    subject = db.relationship('Subject', backref=db.backref('exposures', lazy='dynamic'), lazy="joined")
+    experiment = db.relationship('Experiment', backref=db.backref('exposures', lazy='dynamic'), lazy="joined")
+    scope = db.relationship('Scope', lazy='joined')
+    conversion = db.relationship('Conversion', backref=db.backref('exposure', uselist=False, lazy="joined"), uselist=False, lazy="joined")
 
     def __hash__(self):
         return hash(str(self.id))
@@ -198,4 +254,9 @@ class Conversion(TimestampMixin, db.Model):
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     exposure_id = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id'), nullable=False, unique=True)
+    scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
     value = db.Column(db.Float())
+
+    __table_args__ = (db.UniqueConstraint('exposure_id', 'scope_id'), )
+
+    scope = db.relationship('Scope', lazy='joined')

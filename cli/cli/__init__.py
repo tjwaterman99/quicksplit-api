@@ -11,6 +11,9 @@ add tests for the client via the `sh` package
 import os
 
 from cli.commands import base
+from cli.commands import tokens
+
+base.add_command(tokens)
 
 
 _qs_config_fname = os.path.join(os.path.expanduser('~'), '.quicksplit.json')

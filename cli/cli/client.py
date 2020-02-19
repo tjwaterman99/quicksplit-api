@@ -19,7 +19,7 @@ class Client(object):
             'password': password
         })
         if resp.ok:
-            self.config.token = resp.json()['data']['value']
+            self.config.token = resp.json()['data']['admin_token']['value']
             self.config.dump_config()
         return resp
 

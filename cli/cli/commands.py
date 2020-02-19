@@ -66,16 +66,6 @@ def login(ctx, email, password):
 
 @base.command()
 @click.pass_context
-def token(ctx):
-    """
-    Print the current authentication token in use
-    """
-
-    print(ctx.obj.config.token)
-
-
-@base.command()
-@click.pass_context
 def whoami(ctx):
     """
     Print the email address of the current account
@@ -181,3 +171,59 @@ def results(ctx, name):
         print("Experiment has not received any events. Please confirm your logging is working.")
     else:
         print("An unexpected error occured. Please try again later.")
+
+
+# TODO: make this its own group and add commands for listing, creating
+# etc
+@click.group()
+@click.pass_context
+def tokens(ctx):
+    """
+    Print the current authentication token in use
+    """
+
+
+@tokens.command()
+@click.pass_context
+def current(ctx):
+    """
+    Print the token currently in use
+    """
+
+    print(ctx.obj.config.token)
+
+
+@tokens.command()
+@click.pass_context
+def list(ctx):
+    """
+    Print the set of available tokens
+    """
+
+    resp = ctx.obj.get('/tokens')
+    if resp.ok:
+        print(resp.json()['data'])
+    elif resp.status_code == 403:
+        print("Please log in to access tokens")
+    else:
+        print("An unknown error occured. Please try again later")
+
+
+@tokens.command()
+@click.option('--private', is_flag=True)
+@click.option('--public', is_flag=True)
+@click.option('--staging', is_flag=True)
+@click.option('--production', is_flag=True)
+@click.pass_context
+def create(ctx, private, public, staging, production):
+    """
+    Create a new token.
+    """
+
+    if not (private or public) or (private and public):
+        print("Exactly one of --private or --public must be provided")
+        return
+
+    if not (staging or production) or (staging and production):
+        print("Exactly one of --staging or --production must be provided")
+        return

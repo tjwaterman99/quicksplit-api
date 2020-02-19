@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from app.models import Plan, Role
+from app.models import Plan, Role, Scope
 
 
 plans =  [
@@ -11,7 +11,12 @@ plans =  [
 ]
 
 
+scopes = [
+    Scope(id=uuid4(), name='staging'),
+    Scope(id=uuid4(), name='production')
+]
+
 roles = [
     Role(id=uuid4(), name='admin'),
-    Role(id=uuid4(), name='logger'),
+    Role(id=uuid4(), name='public'),
 ]

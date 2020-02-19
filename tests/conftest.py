@@ -7,8 +7,11 @@ import pytest
 import sqlalchemy
 
 from app import create_app
-from app.models import db as _db, Role, Plan, Account, User, Subject, Experiment, Exposure, Conversion, Token, Cohort
-from app.seeds import plans, roles
+from app.models import (
+    db as _db, Role, Plan, Account, User, Subject, Experiment, Exposure,
+    Conversion, Token, Cohort, Scope
+)
+from app.seeds import plans, roles, scopes
 
 
 os.environ.setdefault('QUICKSPLIT_API_URL', 'http://web:5000')
@@ -36,6 +39,7 @@ def database(app):
         _db.create_all()
         _db.session.add_all(plans)
         _db.session.add_all(roles)
+        _db.session.add_all(scopes)
         _db.session.commit()
         yield _db
         _db.drop_all()
@@ -55,16 +59,20 @@ def db(database):
 
 
 @pytest.fixture()
-def user(db, email):
+def production_scope():
+    return Scope.query.filter(Scope.name=='production').first()
+
+
+@pytest.fixture()
+def staging_scope():
+    return Scope.query.filter(Scope.name=='staging').first()
+
+
+@pytest.fixture()
+def user(db, email, production_scope):
     plan = Plan.query.filter(Plan.name=="free").first()
-    role = Role.query.filter(Role.name=="admin").first()
-    token = Token(role=role, value=uuid.uuid4())
     account = Account.create(plan=plan)
-    user = User.create(email=email, password="password", token=token, account=account)
-    db.session.add(user)
-    db.session.add(token)
-    db.session.add(account)
-    db.session.flush()
+    user = User.create(email=email, password="password", account=account)
     return user
 
 
@@ -77,8 +85,8 @@ def experiment(db, user):
 
 
 @pytest.fixture()
-def subject(db, user):
-    subject = Subject(account=user.account, name='test-subject-1')
+def subject(db, user, production_scope):
+    subject = Subject(account=user.account, name='test-subject-1', scope=production_scope)
     db.session.add(subject)
     db.session.flush()
     return subject
@@ -93,9 +101,9 @@ def cohort(db, experiment):
 
 
 @pytest.fixture()
-def exposure(db, subject, experiment, cohort):
-    exposure = Exposure(subject=subject, experiment=experiment, cohort=cohort)
-    experiment.subjects_counter += 1
+def exposure(db, subject, experiment, cohort, production_scope):
+    exposure = Exposure(subject=subject, experiment=experiment, cohort=cohort, scope=production_scope)
+    experiment.subjects_counter_production += 1
     db.session.add(exposure)
     db.session.add(experiment)
     db.session.flush()
@@ -103,8 +111,8 @@ def exposure(db, subject, experiment, cohort):
 
 
 @pytest.fixture()
-def conversion(db, exposure):
-    conversion = Conversion(exposure=exposure, value=30.0)
+def conversion(db, exposure, production_scope):
+    conversion = Conversion(exposure=exposure, value=30.0, scope=production_scope)
     db.session.add(conversion)
     db.session.flush()
     return conversion
@@ -113,5 +121,30 @@ def conversion(db, exposure):
 @pytest.fixture()
 def client(db, app, user):
     client = app.test_client()
-    client.environ_base['HTTP_AUTHORIZATION'] = f"{user.tokens[0].value}"
+    production_token = list(filter(lambda t: t.scope.name=="production", user.tokens))[0]
+    client.environ_base['HTTP_AUTHORIZATION'] = f"{str(production_token.value)}"
+    return client
+
+
+@pytest.fixture()
+def admin_staging_client(db, app, user):
+    client = app.test_client()
+    token = list(filter(lambda t: t.scope.name=="staging" and t.role.name=="admin", user.tokens))[0]
+    client.environ_base['HTTP_AUTHORIZATION'] = f"{str(token.value)}"
+    return client
+
+
+@pytest.fixture()
+def public_staging_client(db, app, user):
+    client = app.test_client()
+    token = list(filter(lambda t: t.scope.name=="staging" and t.role.name=="public", user.tokens))[0]
+    client.environ_base['HTTP_AUTHORIZATION'] = f"{str(token.value)}"
+    return client
+
+
+@pytest.fixture()
+def public_production_client(db, app, user):
+    client = app.test_client()
+    token = list(filter(lambda t: t.scope.name=="production" and t.role.name=="public", user.tokens))[0]
+    client.environ_base['HTTP_AUTHORIZATION'] = f"{str(token.value)}"
     return client

@@ -1,8 +1,8 @@
 """create-core-models
 
-Revision ID: 733b77e99e43
-Revises: 
-Create Date: 2020-02-19 00:23:33.171117
+Revision ID: a89a9f029ff9
+Revises:
+Create Date: 2020-02-19 20:49:00.562185
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '733b77e99e43'
+revision = 'a89a9f029ff9'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -37,6 +37,14 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_role_name'), 'role', ['name'], unique=True)
+    op.create_table('scope',
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
+    sa.Column('name', sa.String(length=16), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_scope_name'), 'scope', ['name'], unique=True)
     op.create_table('account',
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -50,10 +58,12 @@ def upgrade():
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('account_id', postgresql.UUID(as_uuid=True), nullable=False),
+    sa.Column('scope_id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('name', sa.String(length=64), nullable=False),
     sa.ForeignKeyConstraint(['account_id'], ['account.id'], ),
+    sa.ForeignKeyConstraint(['scope_id'], ['scope.id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('account_id', 'name')
+    sa.UniqueConstraint('account_id', 'name', 'scope_id')
     )
     op.create_index(op.f('ix_subject_name'), 'subject', ['name'], unique=False)
     op.create_table('user',
@@ -73,7 +83,8 @@ def upgrade():
     sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('name', sa.String(length=64), nullable=True),
-    sa.Column('subjects_counter', sa.Integer(), nullable=False),
+    sa.Column('subjects_counter_production', sa.Integer(), nullable=False),
+    sa.Column('subjects_counter_staging', sa.Integer(), nullable=False),
     sa.Column('active', sa.Boolean(), nullable=False),
     sa.Column('last_activated_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
@@ -90,9 +101,11 @@ def upgrade():
     sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('account_id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('role_id', postgresql.UUID(as_uuid=True), nullable=False),
+    sa.Column('scope_id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('value', postgresql.UUID(as_uuid=True), nullable=True),
     sa.ForeignKeyConstraint(['account_id'], ['account.id'], ),
     sa.ForeignKeyConstraint(['role_id'], ['role.id'], ),
+    sa.ForeignKeyConstraint(['scope_id'], ['scope.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -115,21 +128,26 @@ def upgrade():
     sa.Column('cohort_id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('subject_id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('experiment_id', postgresql.UUID(as_uuid=True), nullable=False),
+    sa.Column('scope_id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.ForeignKeyConstraint(['cohort_id'], ['cohort.id'], ),
     sa.ForeignKeyConstraint(['experiment_id'], ['experiment.id'], ),
+    sa.ForeignKeyConstraint(['scope_id'], ['scope.id'], ),
     sa.ForeignKeyConstraint(['subject_id'], ['subject.id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('subject_id', 'experiment_id')
+    sa.UniqueConstraint('subject_id', 'experiment_id', 'scope_id')
     )
     op.create_table('conversion',
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('exposure_id', postgresql.UUID(as_uuid=True), nullable=False),
+    sa.Column('scope_id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('value', sa.Float(), nullable=True),
     sa.ForeignKeyConstraint(['exposure_id'], ['exposure.id'], ),
+    sa.ForeignKeyConstraint(['scope_id'], ['scope.id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('exposure_id')
+    sa.UniqueConstraint('exposure_id'),
+    sa.UniqueConstraint('exposure_id', 'scope_id')
     )
     # ### end Alembic commands ###
 
@@ -150,6 +168,8 @@ def downgrade():
     op.drop_index(op.f('ix_subject_name'), table_name='subject')
     op.drop_table('subject')
     op.drop_table('account')
+    op.drop_index(op.f('ix_scope_name'), table_name='scope')
+    op.drop_table('scope')
     op.drop_index(op.f('ix_role_name'), table_name='role')
     op.drop_table('role')
     op.drop_index(op.f('ix_plan_name'), table_name='plan')

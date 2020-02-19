@@ -138,6 +138,13 @@ def test_activation_post(client, experiment_name):
     assert resp.json()['data']['active'] == True
 
 
+def test_results_get(client, experiment_name):
+    resp = client.get('/results',  data={
+        'experiment': experiment_name
+    })
+    assert resp.status_code == 200
+
+
 def test_logging_out(client):
     client.logout()
     resp = client.get('/experiments')
