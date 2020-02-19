@@ -136,8 +136,6 @@ def test_exposures_post_subject_limits(db, client, experiment, subject, cohort):
     assert experiment.exposures.count() == 1
     assert experiment.subjects_counter == 1
     assert experiment.user.account.subjects.count() == 1
-    experiment.user.account.plan.max_subjects_per_experiment = 3000
-    db.session.add(experiment)
 
 
 def test_exposures_post_inactive_experiment(db, client, experiment):
