@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import uuid
 import datetime as dt
 
-from flask import g, request
+from flask import g, request, current_app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID

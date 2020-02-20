@@ -6,6 +6,7 @@ class ProductionConfig(object):
     SQLALCHEMY_DATABASE_URI = DATABASE_URL
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_COMMIT_ON_TEARDOWN = False
+    PRESERVE_CONTEXT_ON_EXCEPTION = True
 
 
 class TestingConfig(ProductionConfig):
