@@ -12,14 +12,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 db = SQLAlchemy()
 
 
-def close_db_session(response_or_exc):
-    if response_or_exc is None:
-        db.session.commit()
-    else:
-        db.session.rollback()
-    db.session.close()
-
-
 class TimestampMixin(object):
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

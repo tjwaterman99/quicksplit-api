@@ -1,11 +1,11 @@
 import os
 
-from flask import Flask
+from flask import Flask, current_app, jsonify
 from flask_migrate import Migrate
 from werkzeug.utils import import_string
 
 from app.resources import api, load_user
-from app.models import db, close_db_session, Account, User, Experiment, Subject, Exposure, Conversion
+from app.models import db, Account, User, Experiment, Subject, Exposure, Conversion
 
 
 def shell_context():
@@ -36,6 +36,11 @@ def create_app():
 
     app.shell_context_processor(shell_context)
     app.before_request(load_user)
-    app.teardown_appcontext(close_db_session)
+
+    @app.errorhandler(Exception)
+    def rollback_session(exc):
+        db.session.rollback()
+        current_app.logger.error(f"Rolled back {exc}")
+        return jsonify({'data': None, 'status_code': 500}), 500
 
     return app
