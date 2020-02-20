@@ -8,10 +8,19 @@ from cli.config import Config
 from cli.client import Client
 
 
-def tableify(headers, rows):
-    data = [headers]
-    for row in rows:
-        row = [str(item) if item != None else '' for item in row]
+def tableify(json_list, renames=None, excludes=None):
+    renames = renames or {}
+    excludes = excludes or []
+    columns = []
+    keys = [k for k in json_list[0] if k not in excludes]
+    for k in keys.copy():
+        if k in renames:
+            columns.append(renames.get(k))
+        else:
+            columns.append(k)
+    data = [columns]
+    for d in json_list:
+        row = [str(v) if v != None else '' for k,v in d.items() if k in keys]
         data.append(row)
     table = SingleTable(data)
     print(table.table)
@@ -110,7 +119,9 @@ def experiments(ctx):
 
     resp = ctx.obj.get('/experiments')
     if resp.ok:
-        print(resp.json()['data'])
+        tableify(resp.json()['data'],
+                 excludes=['id', 'user_id', 'last_activated_at'],
+                 renames={'subjects_counter': 'subjects', 'name': 'experiment'})
     else:
         print("Failed to load experiments.")
 
@@ -179,7 +190,7 @@ def results(ctx, name):
 @click.pass_context
 def tokens(ctx):
     """
-    Print the current authentication token in use
+    Manage authorization tokens
     """
 
 
@@ -187,7 +198,7 @@ def tokens(ctx):
 @click.pass_context
 def current(ctx):
     """
-    Print the token currently in use
+    Print the value of the token used by the CLI
     """
 
     print(ctx.obj.config.token)
@@ -202,28 +213,8 @@ def list(ctx):
 
     resp = ctx.obj.get('/tokens')
     if resp.ok:
-        print(resp.json()['data'])
+        tableify(resp.json()['data'])
     elif resp.status_code == 403:
         print("Please log in to access tokens")
     else:
         print("An unknown error occured. Please try again later")
-
-
-@tokens.command()
-@click.option('--private', is_flag=True)
-@click.option('--public', is_flag=True)
-@click.option('--staging', is_flag=True)
-@click.option('--production', is_flag=True)
-@click.pass_context
-def create(ctx, private, public, staging, production):
-    """
-    Create a new token.
-    """
-
-    if not (private or public) or (private and public):
-        print("Exactly one of --private or --public must be provided")
-        return
-
-    if not (staging or production) or (staging and production):
-        print("Exactly one of --staging or --production must be provided")
-        return

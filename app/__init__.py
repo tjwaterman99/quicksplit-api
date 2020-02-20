@@ -5,7 +5,7 @@ from flask_migrate import Migrate
 from werkzeug.utils import import_string
 
 from app.resources import api, load_user
-from app.models import db, Account, User, Experiment, Subject, Exposure, Conversion
+from app.models import db, close_db_session, Account, User, Experiment, Subject, Exposure, Conversion
 
 
 def shell_context():
@@ -36,5 +36,6 @@ def create_app():
 
     app.shell_context_processor(shell_context)
     app.before_request(load_user)
+    app.teardown_appcontext(close_db_session)
 
     return app

@@ -95,7 +95,6 @@ class ExperimentsResource(Resource):
         name = request.json['name']
         experiment = Experiment(user=g.user, name=name)
         experiment.activate()
-        db.session.add(experiment)
         return experiment
 
 

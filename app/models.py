@@ -12,6 +12,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 db = SQLAlchemy()
 
 
+def close_db_session(response_or_exc):
+    if response_or_exc is None:
+        db.session.commit()
+    else:
+        db.session.rollback()
+    db.session.close()
+
+
 class TimestampMixin(object):
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -70,7 +78,7 @@ class Scope(TimestampMixin, db.Model):
 class Token(TimestampMixin, db.Model):
     id: str
     value: str
-    policy: str
+    environment: str
     private: bool
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -85,13 +93,12 @@ class Token(TimestampMixin, db.Model):
     scope = db.relationship('Scope', lazy="joined")
 
     @property
-    def policy(self):
-        return self.role.name
-
-    @property
     def private(self):
         return self.role.name in ['admin']
 
+    @property
+    def environment(self):
+        return self.scope.name
 
 @dataclass
 class User(TimestampMixin, db.Model):
@@ -150,13 +157,13 @@ class User(TimestampMixin, db.Model):
 
 @dataclass
 class Experiment(TimestampMixin, db.Model):
-    id: str
-    user_id: str
     name: str
     full: bool
     subjects_counter: int
     active: bool
     last_activated_at: str
+    id: str
+    user_id: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False)
