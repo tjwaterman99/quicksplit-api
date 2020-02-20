@@ -171,10 +171,7 @@ def results(ctx, name):
 
     resp = ctx.obj.get('/results', json={'experiment': name})
     if resp.ok:
-        tableify(
-            resp.json()['data']['table']['columns'],
-            resp.json()['data']['table']['data']
-        )
+        print(resp.json()['data'])
     elif resp.status_code == 404:
         print("Couldn't find that experiment. Please check its name.")
     elif resp.status_code == 403:
@@ -195,9 +192,23 @@ def recent(ctx, staging):
         scope = 'production'
     resp = ctx.obj.get(f'/recent/{scope}')
     if resp.ok:
-        print(json.dumps(resp.json()))
+        tableify(resp.json()['data'])
     else:
         print(resp.status_code)
+
+
+@base.command()
+@click.argument("log", type=click.Choice(['exposure', 'conversion']))
+@click.option('--subject', '-s', required=True)
+@click.option('--experiment', '-e', required=True)
+@click.option('--cohort', '-c', required=True)
+@click.pass_context
+def log(ctx, log, subject, experiment, cohort):
+    resp = ctx.obj.post(f'/{log}s', json={
+        'experiment': experiment,
+        'cohort': cohort,
+        'subject': subject
+    })
 
 # TODO: make this its own group and add commands for listing, creating
 # etc

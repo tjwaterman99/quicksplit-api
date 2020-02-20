@@ -1,11 +1,11 @@
 import os
 
-from flask import Flask, current_app, jsonify
+from flask import Flask, current_app, jsonify, g
 from flask_migrate import Migrate
 from werkzeug.utils import import_string
 
 from app.resources import api, load_user
-from app.models import db, Account, User, Experiment, Subject, Exposure, Conversion
+from app.models import db, Account, User, Experiment, Subject, Exposure, Conversion, Cohort, Scope
 
 
 def shell_context():
@@ -17,6 +17,8 @@ def shell_context():
         'Subject': Subject,
         'Exposure': Exposure,
         'Conversion': Conversion,
+        'Cohort': Cohort,
+        'Scope': Scope,
         'user': User.query.first()
     }
 
