@@ -6,13 +6,16 @@ import sys
 from terminaltables import SingleTable
 
 from cli.config import Config
-from cli.client import Client
+from cli.client import Client, StagingClient
 
 
 def tableify(json_list, renames=None, excludes=None):
     renames = renames or {}
     excludes = excludes or []
     columns = []
+    if len(json_list) == 0:
+        print('No results found')
+        return
     keys = [k for k in json_list[0] if k not in excludes]
     for k in keys.copy():
         if k in renames:
@@ -97,7 +100,7 @@ def config(ctx):
 
 
 @base.command()
-@click.option('--name', required=True)
+@click.argument('name', required=True)
 @click.pass_context
 def create(ctx, name):
     """
@@ -112,13 +115,18 @@ def create(ctx, name):
 
 
 @base.command()
+@click.option('--staging', is_flag=True, required=False, default=False)
 @click.pass_context
-def experiments(ctx):
+def experiments(ctx, staging):
     """
     List active experiments
     """
 
-    resp = ctx.obj.get('/experiments')
+    if staging:
+        with StagingClient(ctx.obj) as client:
+            resp = client.get('/experiments')
+    else:
+        resp = ctx.obj.get('/experiments')
     if resp.ok:
         tableify(resp.json()['data'],
                  excludes=['id', 'user_id', 'last_activated_at'],
@@ -128,14 +136,14 @@ def experiments(ctx):
 
 
 @base.command()
-@click.option('--name', required=True)
+@click.argument('experiment', required=True)
 @click.pass_context
-def start(ctx, name):
+def start(ctx, experiment):
     """
     Start a stopped experiment
     """
 
-    resp = ctx.obj.post('/activate', json={'experiment': name})
+    resp = ctx.obj.post('/activate', json={'experiment': experiment})
     if resp.ok:
         print(f"Started experiment {resp.json()['data']['name']}")
     elif resp.status_code == 404:
@@ -145,14 +153,14 @@ def start(ctx, name):
 
 
 @base.command()
-@click.option('--name', required=True)
+@click.argument('experiment', required=True)
 @click.pass_context
-def stop(ctx, name):
+def stop(ctx, experiment):
     """
     Stop an active experiment
     """
 
-    resp = ctx.obj.post('/deactivate', json={'experiment': name})
+    resp = ctx.obj.post('/deactivate', json={'experiment': experiment})
     if resp.ok:
         print(f"Stopped experiment {resp.json()['data']['name']}")
     elif resp.status_code == 404:
@@ -162,14 +170,19 @@ def stop(ctx, name):
 
 
 @base.command()
-@click.option('--name', required=True)
+@click.option('--experiment', '-e', required=True)
+@click.option('--staging', required=False, default=False, is_flag=True)
 @click.pass_context
-def results(ctx, name):
+def results(ctx, experiment, staging):
     """
     Print the results of an experimence
     """
 
-    resp = ctx.obj.get('/results', json={'experiment': name})
+    if staging:
+        with StagingClient(ctx.obj) as client:
+            resp = client.get('/results', json={'experiment': experiment})
+    else:
+        resp = ctx.obj.get('/results', json={'experiment': experiment})
     if resp.ok:
         print(resp.json()['data'])
     elif resp.status_code == 404:
@@ -186,11 +199,15 @@ def results(ctx, name):
 @click.option('--staging', default=False, is_flag=True)
 @click.pass_context
 def recent(ctx, staging):
+    """
+    Display recent exposure and conversion events
+    """
+
     if staging:
-        scope = 'staging'
+        with StagingClient(ctx.obj) as client:
+            resp = client.get('/recent')
     else:
-        scope = 'production'
-    resp = ctx.obj.get(f'/recent/{scope}')
+        resp = ctx.obj.get(f'/recent')
     if resp.ok:
         tableify(resp.json()['data'])
     else:
@@ -202,16 +219,32 @@ def recent(ctx, staging):
 @click.option('--subject', '-s', required=True)
 @click.option('--experiment', '-e', required=True)
 @click.option('--cohort', '-c', required=True)
+@click.option('--value', '-v', required=False)
+@click.option('--staging', required=False, is_flag=True, default=False)
 @click.pass_context
-def log(ctx, log, subject, experiment, cohort):
-    resp = ctx.obj.post(f'/{log}s', json={
+def log(ctx, log, subject, experiment, cohort, value, staging):
+    """
+    Create a new exposure or conversion event
+    """
+
+    if value and (log == 'exposure'):
+        print("Value is not a valid argument when logging an exposure.")
+
+    json = {
         'experiment': experiment,
         'cohort': cohort,
-        'subject': subject
-    })
+        'subject': subject,
+        'value': value
+    }
 
-# TODO: make this its own group and add commands for listing, creating
-# etc
+    if staging:
+        with StagingClient(ctx.obj) as client:
+            resp = client.post(f'/{log}s', json=json)
+    else:
+        resp = ctx.obj.post(f'/{log}s', json=json)
+    print(resp.status_code)
+
+
 @click.group()
 @click.pass_context
 def tokens(ctx):

@@ -325,3 +325,31 @@ def test_public_production_client_inserts(db, public_production_client, user, ex
 
     assert conversion is not None
     assert conversion.scope.name == 'production'
+
+
+def test_recent_get(db, client, experiment, exposure, conversion):
+    resp = client.get('/recent')
+
+    assert resp.status_code == 200
+    assert len(resp.json['data']) == 2
+
+
+def test_staging_recent_get(db, client, admin_staging_client, experiment):
+    resp = admin_staging_client.get('/recent')
+    assert resp.status_code == 200
+    assert len(resp.json['data']) == 0
+
+    exp_resp = admin_staging_client.post('/exposures', json={
+        'experiment': experiment.name,
+        'cohort': 'tester',
+        'subject': 'tester1'
+    })
+    assert exp_resp.status_code == 200
+
+    resp2 = admin_staging_client.get('/recent')
+    assert resp2.status_code == 200
+    assert len(resp2.json['data']) == 1
+
+    resp3 = client.get('/recent')
+    assert resp3.status_code == 200
+    assert  len(resp3.json['data']) == 0

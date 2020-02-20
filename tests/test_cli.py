@@ -59,7 +59,7 @@ def test_cli_uses_correct_url():
 
 
 def test_cli_can_create_experiment(experiment_name):
-    cmd = ['quicksplit', 'create', '--name', experiment_name]
+    cmd = ['quicksplit', 'create', experiment_name]
     resp = subprocess.run(cmd, capture_output=True)
     assert resp.returncode == 0
     assert experiment_name in resp.stdout.decode()
@@ -73,7 +73,7 @@ def test_cli_can_list_experiments(experiment_name):
 
 
 def test_cli_can_stop_experiments(experiment_name):
-    cmd = ['quicksplit', 'stop', '--name', experiment_name]
+    cmd = ['quicksplit', 'stop', experiment_name]
     resp = subprocess.run(cmd, capture_output=True)
     assert resp.returncode == 0
     assert experiment_name in resp.stdout.decode()
@@ -81,7 +81,7 @@ def test_cli_can_stop_experiments(experiment_name):
 
 
 def test_cli_can_start_experiments(experiment_name):
-    cmd = ['quicksplit', 'start', '--name', experiment_name]
+    cmd = ['quicksplit', 'start', experiment_name]
     resp = subprocess.run(cmd, capture_output=True)
     assert resp.returncode == 0
     assert experiment_name in resp.stdout.decode()

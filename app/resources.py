@@ -281,8 +281,8 @@ class RecentResource(Resource):
     # TODO: create a `last_seen_at` field for cohort, subject, exposure, conversions
     # and use that over the `updated_at` field
     @protected()
-    def get(self, scope_name):
-        re = recent_events.format(user_id=g.user.id)
+    def get(self):
+        re = recent_events.format(user_id=g.user.id, scope_name=g.token.scope.name)
         return [dict(r) for r in db.session.execute(re).fetchall()]
 
 
@@ -298,4 +298,4 @@ api.add_resource(ActivateResource, '/activate')
 api.add_resource(DeactivateResource, '/deactivate')
 api.add_resource(TokenRoleResource, '/tokens/<role_name>/<scope_name>')
 api.add_resource(TokensResource, '/tokens')
-api.add_resource(RecentResource, '/recent/<scope_name>')
+api.add_resource(RecentResource, '/recent')

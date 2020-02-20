@@ -43,6 +43,8 @@ def create_app():
     def rollback_session(exc):
         db.session.rollback()
         current_app.logger.error(f"Rolled back {exc}")
+        if current_app.testing or current_app.debug:
+            raise exc
         return jsonify({'data': None, 'status_code': 500}), 500
 
     return app
