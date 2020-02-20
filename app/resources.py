@@ -2,7 +2,9 @@ import datetime as dt
 
 from flask import request, g, abort, current_app, make_response, json
 from flask_restful import Api, Resource
+import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.sql.expression import literal_column
 
 from app.models import (
     db, Account, User, Token, Experiment, Subject, Conversion, Exposure, Role,
@@ -274,6 +276,26 @@ class TokensResource(Resource):
         return g.user.tokens
 
 
+class RecentResource(Resource):
+
+    # TODO: add conversions, create a `last_seen_at` field for cohort, subject, exposure, conversions
+    @protected()
+    def get(self, scope_name):
+        exposures = db.session\
+                      .query(Experiment.name, literal_column("'exposure' as type"), Cohort.name, Subject.name, literal_column("null as value"), Exposure.updated_at)\
+                      .join(Cohort, Cohort.id==Exposure.cohort_id)\
+                      .join(Scope, Scope.id==Exposure.scope_id)\
+                      .join(Experiment, sa.and_(Experiment.id==Exposure.experiment_id, Experiment.user_id==g.user.id))\
+                      .join(Subject, Subject.id==Exposure.subject_id)\
+                      .order_by(Exposure.created_at.desc())\
+                      .filter(Scope.name==scope_name)\
+                      .filter(User.id==g.user.id)\
+                      .filter(Exposure.updated_at > (dt.datetime.now() - dt.timedelta(days=1)))\
+                      .limit(15)
+        current_app.logger.error(exposures)
+        return exposures.all()
+
+
 api.add_resource(IndexResource, '/')
 api.add_resource(UserResource, '/user')
 api.add_resource(ExperimentsResource, '/experiments')
@@ -286,3 +308,4 @@ api.add_resource(ActivateResource, '/activate')
 api.add_resource(DeactivateResource, '/deactivate')
 api.add_resource(TokenRoleResource, '/tokens/<role_name>/<scope_name>')
 api.add_resource(TokensResource, '/tokens')
+api.add_resource(RecentResource, '/recent/<scope_name>')

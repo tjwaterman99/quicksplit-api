@@ -1,3 +1,4 @@
+import json
 import click
 import os
 import sys
@@ -183,6 +184,20 @@ def results(ctx, name):
     else:
         print("An unexpected error occured. Please try again later.")
 
+
+@base.command()
+@click.option('--staging', default=False, is_flag=True)
+@click.pass_context
+def recent(ctx, staging):
+    if staging:
+        scope = 'staging'
+    else:
+        scope = 'production'
+    resp = ctx.obj.get(f'/recent/{scope}')
+    if resp.ok:
+        print(json.dumps(resp.json()))
+    else:
+        print(resp.status_code)
 
 # TODO: make this its own group and add commands for listing, creating
 # etc
