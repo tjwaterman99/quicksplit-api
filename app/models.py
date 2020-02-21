@@ -107,7 +107,7 @@ class User(TimestampMixin, db.Model):
 
     tokens = db.relationship('Token', lazy='joined', backref='user', cascade='delete')
     account = db.relationship('Account', lazy='joined', backref=db.backref('users', lazy='dynamic'))
-    experiments = db.relationship('Experiment', lazy='dynamic', backref="user", cascade='delete')
+    experiments = db.relationship('Experiment', lazy='dynamic', backref="user", cascade='all')
 
     def __hash__(self):
         return hash(str(self.id))
@@ -161,15 +161,10 @@ class Experiment(TimestampMixin, db.Model):
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String(length=64), index=True)
 
-    # We can make this "production subjects counter" and "staging subjects counter"
-    # The subjects_counter attribute can dynamically select the right field
-    # Depending on the environment of the token (defaulting to production if no request present)
-    # TODO: ensure the resource POST method correctly selects the right subject
-    # counter based on the token's role
     subjects_counter_production = db.Column(db.Integer(), nullable=False, default=0)
     subjects_counter_staging = db.Column(db.Integer(), nullable=False, default=0)
-    active = db.Column(db.Boolean(), nullable=False, index=True)
-    last_activated_at = db.Column(db.DateTime(timezone=True), nullable=False, index=True)
+    active = db.Column(db.Boolean(), nullable=False, index=True, default=False)
+    last_activated_at = db.Column(db.DateTime(timezone=True), nullable=False, index=True, default=func.now())  # We should allow this to be nullable
 
     __table_args__ = (db.UniqueConstraint('user_id', 'name'), )
 

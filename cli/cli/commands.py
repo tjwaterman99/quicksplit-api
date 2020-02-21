@@ -9,6 +9,23 @@ from cli.client import Client, StagingClient
 from cli.printers import Printer
 
 
+class ResponseErrorHandler(object):
+    def __init__(self, response):
+        self.response = response
+
+    @property
+    def ok(self):
+        if self.response.ok:
+            return True
+        else:
+            try:
+                message = self.response.json().get('message')
+            except Exception as exc:
+                message = "A client error occured. Please try again later."
+            print(message + f' [code={self.response.status_code}]')
+            return False
+
+
 @click.group()
 @click.pass_context
 def base(ctx):
@@ -33,11 +50,9 @@ def register(ctx, email, password):
     """
 
     resp = ctx.obj.register(email, password)
-    if resp.ok:
+    if ResponseErrorHandler(resp).ok:
         ctx.obj.login(email, password)
         print(f"Created new account for {email}")
-    else:
-        print("Failed to create new account. Please try a different email.")
 
 
 @base.command()
@@ -50,10 +65,8 @@ def login(ctx, email, password):
     """
 
     resp = ctx.obj.login(email=email, password=password)
-    if resp.ok:
+    if ResponseErrorHandler(resp).ok:
         print("Successfully logged in.")
-    else:
-        print("Invalid email/password combination.")
 
 
 @base.command()
@@ -64,7 +77,7 @@ def whoami(ctx):
     """
 
     resp = ctx.obj.get('/user')
-    if resp.ok:
+    if ResponseErrorHandler(resp).ok:
         print(resp.json()['data']['email'])
 
 
@@ -87,10 +100,8 @@ def create(ctx, name):
     """
 
     resp = ctx.obj.post('/experiments', json={'name': name})
-    if resp.ok:
-        print(resp.json()['data'])
-    else:
-        print("Creating experiment failed. Please try a different name.")
+    if ResponseErrorHandler(resp).ok:
+        print(f"Successfully created new experiment {name}")
 
 
 @base.command()
@@ -106,13 +117,11 @@ def experiments(ctx, staging):
             resp = client.get('/experiments')
     else:
         resp = ctx.obj.get('/experiments')
-    if resp.ok:
+    if ResponseErrorHandler(resp).ok:
         Printer(resp.json()['data'],
                 order=['name', 'subjects_counter', 'active', 'full'],
                 rename={'subjects_counter': 'subjects'}
         ).echo()
-    else:
-        print("Failed to load experiments.")
 
 
 @base.command()
@@ -124,12 +133,9 @@ def start(ctx, experiment):
     """
 
     resp = ctx.obj.post('/activate', json={'experiment': experiment})
-    if resp.ok:
+    if ResponseErrorHandler(resp).ok:
         print(f"Started experiment {resp.json()['data']['name']}")
-    elif resp.status_code == 404:
-        print("Couldn't find that experiment. Please check its name.")
-    else:
-        print("Starting experiment failed. Please try again.")
+
 
 
 @base.command()
@@ -141,12 +147,8 @@ def stop(ctx, experiment):
     """
 
     resp = ctx.obj.post('/deactivate', json={'experiment': experiment})
-    if resp.ok:
+    if ResponseErrorHandler(resp).ok:
         print(f"Stopped experiment {resp.json()['data']['name']}")
-    elif resp.status_code == 404:
-        print("Couldn't find that experiment. Please check its name.")
-    else:
-        print("Stopping experiment failed. Please try again.")
 
 
 @base.command()
@@ -163,16 +165,8 @@ def results(ctx, experiment, staging):
             resp = client.get('/results', json={'experiment': experiment})
     else:
         resp = ctx.obj.get('/results', json={'experiment': experiment})
-    if resp.ok:
+    if ResponseErrorHandler(resp).ok:
         Printer(resp.json()['data']['table']).echo()
-    elif resp.status_code == 404:
-        print("Couldn't find that experiment. Please check its name.")
-    elif resp.status_code == 403:
-        print("Access denied. Please log in.")
-    elif resp.status_code == 400:
-        print("Experiment has not received any events. Please confirm your logging is working.")
-    else:
-        print("An unexpected error occured. Please try again later.")
 
 
 @base.command()
@@ -188,13 +182,11 @@ def recent(ctx, staging):
             resp = client.get('/recent')
     else:
         resp = ctx.obj.get(f'/recent')
-    if resp.ok:
+    if ResponseErrorHandler(resp).ok:
         Printer(resp.json()['data'],
                 order=['type', 'experiment', 'subject', 'cohort', 'value', 'updated_at'],
                 rename={'updated_at': 'last seen'}
         ).echo()
-    else:
-        print(resp.status_code)
 
 
 @base.command()
@@ -225,7 +217,8 @@ def log(ctx, log, subject, experiment, cohort, value, staging):
             resp = client.post(f'/{log}s', json=json)
     else:
         resp = ctx.obj.post(f'/{log}s', json=json)
-    print(resp.status_code)
+    if ResponseErrorHandler(resp).ok:
+        pass
 
 
 @base.command()
@@ -240,9 +233,5 @@ def tokens(ctx, current):
         print(ctx.obj.config.token)
         return
     resp = ctx.obj.get('/tokens')
-    if resp.ok:
+    if ResponseErrorHandler(resp).ok:
         Printer(resp.json()['data'], order=['value', 'private', 'environment']).echo()
-    elif resp.status_code == 403:
-        print("Please log in to access tokens")
-    else:
-        print("An unknown error occured. Please try again later")

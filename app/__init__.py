@@ -1,11 +1,23 @@
 import os
 
-from flask import Flask, current_app, jsonify, g
+from flask import Flask, current_app, json, make_response
 from flask_migrate import Migrate
 from werkzeug.utils import import_string
 
 from app.resources import api, load_user
 from app.models import db, Account, User, Experiment, Subject, Exposure, Conversion, Cohort, Scope
+from app.exceptions import ApiException
+
+
+def handle_api_exception(exc):
+    if not current_app.testing:
+        db.session.rollback()
+    return make_response(json.dumps(exc), exc.status_code)
+
+
+def handle_uncaught_exception(exc):
+    current_app.logger.error(exc)
+    raise ApiException(500, "Unexpected exception occured. Please try again later.")
 
 
 def shell_context():
@@ -39,12 +51,7 @@ def create_app():
     app.shell_context_processor(shell_context)
     app.before_request(load_user)
 
-    @app.errorhandler(Exception)
-    def rollback_session(exc):
-        db.session.rollback()
-        current_app.logger.error(f"Rolled back {exc}")
-        if current_app.testing or current_app.debug:
-            raise exc
-        return jsonify({'data': None, 'status_code': 500}), 500
+    app.register_error_handler(Exception, handle_uncaught_exception)
+    app.register_error_handler(ApiException, handle_api_exception)
 
     return app

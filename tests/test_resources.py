@@ -117,20 +117,20 @@ def test_exposures_post_duplicate_subject(db, client, experiment, subject, cohor
 
 def test_exposures_post_subject_limits(db, client, experiment, subject, cohort):
     experiment.user.account.plan.max_subjects_per_experiment = 1
-    db.session.add_all([experiment, subject, cohort])
-
     resp = client.post('/exposures', json={
         'experiment': experiment.name,
         'subject': subject.name,
         'cohort': cohort.name
     })
     assert resp.status_code == 200
+    assert experiment.exposures.count() == 1
 
     resp = client.post('/exposures', json={
         'experiment': experiment.name,
         'subject': subject.name + 'v2',
         'cohort': cohort.name
     })
+    experiment = db.session.query(Experiment).first()
     assert resp.status_code == 422
     assert experiment.exposures.count() == 1
     assert experiment.subjects_counter == 1

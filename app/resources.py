@@ -1,10 +1,11 @@
 import datetime as dt
 
 from flask import request, g, abort, current_app, make_response, json
-from flask_restful import Api, Resource
+from flask_restful import Api, Resource, abort
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.sql.expression import literal_column
+from sqlalchemy.exc import IntegrityError
 
 from app.models import (
     db, Account, User, Token, Experiment, Subject, Conversion, Exposure, Role,
@@ -12,6 +13,8 @@ from app.models import (
 )
 from app.services import ExperimentResultCalculator
 from app.sql import recent_events
+from app.exceptions import ApiException
+
 
 api = Api()
 
@@ -32,9 +35,9 @@ def protected(roles=None):
     def decorator(function):
         def wrapper(*args, **kwargs):
             if current_app and g.user is None:
-                abort(403)
+                raise ApiException(403, "Permission denied. Please log in to access this resource.")
             elif not any([g.user.has_role(role) for role in roles]):
-                abort(403)
+                raise ApiException(403, message="Permission denied. User does not have access to this resource.")
             else:
                 return function(*args, **kwargs)
         return wrapper
@@ -71,7 +74,10 @@ class UserResource(Resource):
         email = request.json['email']
         password = request.json['password']
         account = Account.create()
-        user = User.create(email=email, password=password, account=account)
+        try:
+            user = User.create(email=email, password=password, account=account)
+        except IntegrityError as exc:
+            raise ApiException(403, "User with that email already exists.")
         return user
 
 
@@ -84,7 +90,7 @@ class LoginResource(Resource):
         if user.check_password(password):
             return user
         else:
-            abort(403)
+            raise ApiException(403, message="Invalid email or password.")
 
 
 class ExperimentsResource(Resource):
@@ -119,13 +125,13 @@ class ExposuresResource(Resource):
 
         experiment = g.user.experiments.filter(Experiment.name==experiment_name).first()
         if not experiment:
-            abort(422, "Experiment does not exist")
+            raise ApiException(422, "Experiment does not exist")
 
         if experiment.full:
-            abort(422, "Experiment has reached max exposures limit")
+            raise ApiException(422, "Experiment has reached max exposures limit")
 
         if not experiment.active:
-            abort(422, "Experiment is not active")
+            raise ApiException(422, "Experiment is not active")
 
         subject_insert = insert(Subject.__table__).values(
             account_id=g.user.account_id,
@@ -163,7 +169,7 @@ class ExposuresResource(Resource):
             else:
                 current_app.logger.error(f"Unexpected scope name {scope.name}")
             db.session.add(experiment)
-            db.session.flush()
+        db.session.flush()
 
 
 class ConversionsResource(Resource):
@@ -182,18 +188,18 @@ class ConversionsResource(Resource):
 
         experiment = g.user.experiments.filter(Experiment.name==experiment_name).first()
         if not experiment:
-            abort(422, "Experiment does not exist")
+            raise ApiException(422, "Experiment does not exist")
 
         subject = Subject.query.filter(Subject.name==subject_name)\
                                .filter(Subject.account==experiment.user.account)\
                                .first()
         if not subject:
-            abort(422, "Subject does not exist")
+            raise ApiException(422, "Subject does not exist")
         exposure = Exposure.query.filter(Exposure.subject_id==subject.id)\
                                  .filter(Exposure.experiment_id==experiment.id)\
                                  .first()
         if not exposure:
-            abort(422, "Subject does not have an exposure for that experiment yet")
+            raise ApiException(422, "Subject does not have an exposure for that experiment yet")
 
         conversion_insert = insert(Conversion.__table__).values(
             exposure_id=exposure.id,
@@ -214,9 +220,9 @@ class ResultsResource(Resource):
 
         experiment = g.user.experiments.filter(Experiment.name==experiment_name).first()
         if not experiment:
-            abort(404, "Experiment does not exist")
+            raise ApiException(404, "Experiment does not exist")
         if experiment.subjects_counter == 0:
-            abort(400, "Experiment has not collected any data")
+            raise ApiException(400, "Experiment has not collected any data")
         erc = ExperimentResultCalculator(experiment)
         erc.load_exposures()
 
@@ -239,7 +245,7 @@ class ActivateResource(Resource):
         experiment_name = request.json['experiment']
         experiment = g.user.experiments.filter(Experiment.name==experiment_name).first()
         if not experiment:
-            abort(404, "Experiment does not exist")
+            raise ApiException(404, "Experiment does not exist")
         experiment.activate()
         return experiment
 
@@ -251,7 +257,7 @@ class DeactivateResource(Resource):
         experiment_name = request.json['experiment']
         experiment = g.user.experiments.filter(Experiment.name==experiment_name).first()
         if not experiment:
-            abort(404, "Experiment does not exist")
+            raise ApiException(404, "Experiment does not exist")
         experiment.deactivate()
         return experiment
 
@@ -263,7 +269,7 @@ class TokenRoleResource(Resource):
         role = Role.query.filter(Role.name==role_name).first()
         scope = Scope.query.filter(Scope.name==scope_name).first()
         if not role and not scope:
-            abort(404)
+            raise ApiException(404, "Can not create token with that role or scope.")
         token = Token(role=role, scope=scope, user=g.user, account=g.user.account)
         db.session.add(token)
         db.session.flush()
