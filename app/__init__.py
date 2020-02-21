@@ -10,14 +10,22 @@ from app.exceptions import ApiException
 
 
 def handle_api_exception(exc):
+    current_app.logger.error("Handling api exception")
     if not current_app.testing:
         db.session.rollback()
     return make_response(json.dumps(exc), exc.status_code)
 
 
 def handle_uncaught_exception(exc):
+    if not current_app.testing:
+        db.session.rollback()
     current_app.logger.error(exc)
-    raise ApiException(500, "Unexpected exception occured. Please try again later.")
+    resp = {
+        'data': None,
+        'message': "Unexpected exception occured. Please try again later.",
+        'status_code': 500
+    }
+    return make_response(json.dumps(resp), 500)
 
 
 def shell_context():

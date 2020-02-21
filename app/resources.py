@@ -103,7 +103,10 @@ class ExperimentsResource(Resource):
     def post(self):
         name = request.json['name']
         experiment = Experiment(user=g.user, name=name)
-        experiment.activate()
+        try:
+            experiment.activate()
+        except IntegrityError:
+            raise ApiException(404, "Experiment with that name already exists.")
         return experiment
 
 
