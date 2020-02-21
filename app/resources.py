@@ -223,17 +223,15 @@ class ResultsResource(Resource):
             raise ApiException(404, "Experiment does not exist")
         if experiment.subjects_counter == 0:
             raise ApiException(400, "Experiment has not collected any data")
-        erc = ExperimentResultCalculator(experiment)
-        erc.load_exposures()
+        erc = ExperimentResultCalculator(experiment, scope_name=g.token.scope.name)
+        erc.run()
 
-        anova = erc.anova()
-        table = erc._summary_table()
         results = {
             'experiment': experiment.name,
-            'table': table.reset_index().to_dict(orient='records'),
-            'p-value': anova.f_pvalue,
-            'significant': bool(anova.f_pvalue < 0.1),
-            'subjects': int(anova.nobs)
+            'table': erc.table_json,
+            'p-value': erc.f_pvalue,
+            'significant': erc.significant,
+            'subjects': erc.nobs
         }
         return results
 

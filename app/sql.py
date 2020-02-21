@@ -55,7 +55,7 @@ select
     experiment.name,
     subject.name as subject,
     cohort.name as cohort,
-    case when conversion.id is null then 1 else 0 end as converted,
+    case when conversion.id is null then 0 else 1 end as converted,
     conversion.value as conversion_value
 from experiment
 join exposure on experiment.id = exposure.experiment_id

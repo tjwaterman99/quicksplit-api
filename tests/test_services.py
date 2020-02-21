@@ -5,12 +5,6 @@ from app.services import ExperimentResultCalculator
 import logging
 
 
-@pytest.fixture
-def exposures_count():
-    return 50
-
-
-@pytest.fixture
 def setup_experiment(client, experiment, exposures_count):
     for n in range(exposures_count):
         cohort = 'experimental' if n % 2 == 0 else 'control'
@@ -36,7 +30,28 @@ def setup_experiment(client, experiment, exposures_count):
             raise AttributeError
 
 
-def test_experiment_result_calculator(db, setup_experiment, experiment, exposures_count):
+def test_experiment_result_calculator_50_samples(db, client, experiment):
+    exposures_count = 50
+    setup_experiment(client, experiment, exposures_count)
     erc = ExperimentResultCalculator(experiment)
-    erc.load_exposures()
-    assert len(erc.data) == exposures_count
+    erc.run()
+    assert erc.nobs == exposures_count
+    assert erc.f_pvalue is not None
+
+
+def test_experiment_result_calculator_1_sample(db, client, experiment):
+    exposures_count = 1
+    setup_experiment(client, experiment, exposures_count)
+    erc = ExperimentResultCalculator(experiment)
+    erc.run()
+    assert erc.nobs == exposures_count
+    assert erc.f_pvalue is None
+
+
+def test_experiment_result_calculator_5_samples(db, client, experiment):
+    exposures_count = 5
+    setup_experiment(client, experiment, exposures_count)
+    erc = ExperimentResultCalculator(experiment)
+    erc.run()
+    assert erc.nobs == exposures_count
+    assert erc.f_pvalue is not None
