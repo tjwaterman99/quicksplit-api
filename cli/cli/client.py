@@ -33,8 +33,6 @@ class Client(object):
             'email': email,
             'password': password
         })
-        if resp.ok:
-            self.login(email, password)
         return resp
 
     def get(self, route, json=None):

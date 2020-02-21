@@ -118,9 +118,11 @@ def experiments(ctx, staging):
     else:
         resp = ctx.obj.get('/experiments')
     if ResponseErrorHandler(resp).ok:
-        Printer(resp.json()['data'],
+        data = resp.json()['data']
+        Printer(data,
                 order=['name', 'subjects_counter', 'active', 'full'],
-                rename={'subjects_counter': 'subjects'}
+                rename={'subjects_counter': 'subjects'},
+                empty_data_message="No experiments created yet. \nCreate an experiment with `quicksplit create my-experiment`"
         ).echo()
 
 
@@ -161,12 +163,18 @@ def results(ctx, experiment, staging):
     """
 
     if staging:
+        environment = "staging"
         with StagingClient(ctx.obj) as client:
             resp = client.get('/results', json={'experiment': experiment})
     else:
+        environment = "production"
         resp = ctx.obj.get('/results', json={'experiment': experiment})
     if ResponseErrorHandler(resp).ok:
-        Printer(resp.json()['data']['table']).echo()
+        data = resp.json()['data']['table']
+        Printer(
+            data,
+            empty_data_message=f"No {environment} data collected for experiment {experiment} yet."
+        ).echo()
 
 
 @base.command()
@@ -178,14 +186,19 @@ def recent(ctx, staging):
     """
 
     if staging:
+        environment = "staging"
         with StagingClient(ctx.obj) as client:
             resp = client.get('/recent')
     else:
+        environment = "production"
         resp = ctx.obj.get(f'/recent')
     if ResponseErrorHandler(resp).ok:
-        Printer(resp.json()['data'],
-                order=['type', 'experiment', 'subject', 'cohort', 'value', 'updated_at'],
-                rename={'updated_at': 'last seen'}
+        data = resp.json()['data']
+        Printer(
+            data,
+            empty_data_message=f"No results received for {environment} environment yet. Please check your logging is working.",
+            order=['type', 'experiment', 'subject', 'cohort', 'value', 'updated_at'],
+            rename={'updated_at': 'last seen'}
         ).echo()
 
 

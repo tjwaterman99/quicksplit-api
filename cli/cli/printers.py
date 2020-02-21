@@ -4,6 +4,12 @@ from terminaltables import SingleTable
 from click import echo
 
 
+DEFAULT_EMPTY_DATA_MESSAGE = """
+No data to display.
+"""
+
+
+
 class Printer(SingleTable):
     """
     Handles printing a list of json objects.
@@ -14,19 +20,25 @@ class Printer(SingleTable):
 
     def __init__(self, table_data_json: List[Dict], title=None,
                  order=None, bold_header=True, color="bright_magenta",
-                 rename=None):
+                 rename=None, empty_data_message=None):
         self.table_data_json = table_data_json
         if len(self.table_data_json) == 0 or self.table_data_json[0] == {}:
-            raise AttributeError("Can not print table with no data")
+            self.empty = True
+        else:
+            self.empty = False
 
         self.rename = rename
         self.order = order if order else []
         self.bold_header = bold_header
         self.color = color
+        self.empty_data_message = empty_data_message or DEFAULT_EMPTY_DATA_MESSAGE
         super().__init__(self.formatted_table_data, title=title)
 
     def echo(self):
-        echo(self.table)
+        if self.empty:
+            echo(self.empty_data_message)
+        else:
+            echo(self.table)
 
     @property
     def formatted_table_data(self):
