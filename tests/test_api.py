@@ -102,7 +102,7 @@ def test_experiments_duplicate_post(client, experiment_name):
     resp = client.post('/experiments', data={
         'name': experiment_name
     })
-    assert resp.status_code == 500
+    assert resp.status_code == 403
 
     resp = client.get('/experiments')
     assert resp.status_code == 200
