@@ -2,6 +2,7 @@ import json
 import click
 import os
 import sys
+import getpass
 
 
 from cli.config import Config
@@ -41,13 +42,24 @@ def base(ctx):
 
 
 @base.command()
-@click.option('--email', required=True)
-@click.option('--password', required=True)
+@click.option('--email', required=False)
+@click.option('--password', required=False)
 @click.pass_context
 def register(ctx, email, password):
     """
     Create a new account on quicksplit.io
     """
+
+    # ask for password again if not using the flag
+    reconfirm_password = password == None
+
+    email = email or input("Email: ")
+    password = password or getpass.getpass("Password: ")
+    if reconfirm_password:
+        confirm_password = getpass.getpass("Confirm password: ")
+        if password != confirm_password:
+            print("Passwords do not match.")
+            return
 
     resp = ctx.obj.register(email, password)
     if ResponseErrorHandler(resp).ok:
@@ -56,13 +68,16 @@ def register(ctx, email, password):
 
 
 @base.command()
-@click.option('--email', required=True)
-@click.option('--password', required=True)
+@click.option('--email', required=False)
+@click.option('--password', required=False)
 @click.pass_context
 def login(ctx, email, password):
     """
     Log in to quicksplit.io
     """
+
+    email = email or input("Email: ")
+    password = password or getpass.getpass("Password: ")
 
     resp = ctx.obj.login(email=email, password=password)
     if ResponseErrorHandler(resp).ok:
