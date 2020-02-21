@@ -106,7 +106,7 @@ class ExperimentsResource(Resource):
         try:
             experiment.activate()
         except IntegrityError:
-            raise ApiException(404, "Experiment with that name already exists.")
+            raise ApiException(403, "Experiment with that name already exists.")
         return experiment
 
 
