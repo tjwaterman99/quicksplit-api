@@ -14,6 +14,7 @@ import subprocess
 import os
 import pytest
 
+from cli.printers import Printer
 
 os.environ.setdefault('QUICKSPLIT_API_URL', 'http://web:5000')
 
@@ -86,3 +87,15 @@ def test_cli_can_start_experiments(experiment_name):
     assert resp.returncode == 0
     assert experiment_name in resp.stdout.decode()
     assert 'Started' in resp.stdout.decode()
+
+
+def test_printer():
+    input = [{"a": 1, "b": 2, "c": 3}, {"a": 3, "b": 4, "c": 5}]
+    printer = Printer(input, bold_header=False, color=None)
+    assert printer.table_data == [['a','b', 'c'], [1,2,3], [3,4,5]]
+
+    printer = Printer(input, order=['b','c'], bold_header=False, color=None)
+    assert printer.table_data == [['b', 'c'], [2,3], [4,5]]
+
+    printer = Printer(input, order=['b','a','c'], bold_header=False, color=None)
+    assert printer.table_data == [['b','a','c'], [2,1,3], [4,3,5]]

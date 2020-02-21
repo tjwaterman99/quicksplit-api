@@ -3,31 +3,10 @@ import click
 import os
 import sys
 
-from terminaltables import SingleTable
 
 from cli.config import Config
 from cli.client import Client, StagingClient
-
-
-def tableify(json_list, renames=None, excludes=None):
-    renames = renames or {}
-    excludes = excludes or []
-    columns = []
-    if len(json_list) == 0:
-        print('No results found')
-        return
-    keys = [k for k in json_list[0] if k not in excludes]
-    for k in keys.copy():
-        if k in renames:
-            columns.append(renames.get(k))
-        else:
-            columns.append(k)
-    data = [columns]
-    for d in json_list:
-        row = [str(v) if v != None else '' for k,v in d.items() if k in keys]
-        data.append(row)
-    table = SingleTable(data)
-    print(table.table)
+from cli.printers import Printer
 
 
 @click.group()
@@ -128,9 +107,10 @@ def experiments(ctx, staging):
     else:
         resp = ctx.obj.get('/experiments')
     if resp.ok:
-        tableify(resp.json()['data'],
-                 excludes=['id', 'user_id', 'last_activated_at'],
-                 renames={'subjects_counter': 'subjects', 'name': 'experiment'})
+        Printer(resp.json()['data'],
+                order=['name', 'subjects_counter', 'active', 'full'],
+                rename={'subjects_counter': 'subjects'}
+        ).echo()
     else:
         print("Failed to load experiments.")
 
@@ -170,7 +150,7 @@ def stop(ctx, experiment):
 
 
 @base.command()
-@click.option('--experiment', '-e', required=True)
+@click.argument('experiment', required=True)
 @click.option('--staging', required=False, default=False, is_flag=True)
 @click.pass_context
 def results(ctx, experiment, staging):
@@ -184,7 +164,7 @@ def results(ctx, experiment, staging):
     else:
         resp = ctx.obj.get('/results', json={'experiment': experiment})
     if resp.ok:
-        print(resp.json()['data'])
+        Printer(resp.json()['data']['table']).echo()
     elif resp.status_code == 404:
         print("Couldn't find that experiment. Please check its name.")
     elif resp.status_code == 403:
@@ -209,7 +189,10 @@ def recent(ctx, staging):
     else:
         resp = ctx.obj.get(f'/recent')
     if resp.ok:
-        tableify(resp.json()['data'])
+        Printer(resp.json()['data'],
+                order=['type', 'experiment', 'subject', 'cohort', 'value', 'updated_at'],
+                rename={'updated_at': 'last seen'}
+        ).echo()
     else:
         print(resp.status_code)
 
@@ -245,34 +228,20 @@ def log(ctx, log, subject, experiment, cohort, value, staging):
     print(resp.status_code)
 
 
-@click.group()
+@base.command()
+@click.option('--current', is_flag=True, default=False)
 @click.pass_context
-def tokens(ctx):
-    """
-    Manage authorization tokens
-    """
-
-
-@tokens.command()
-@click.pass_context
-def current(ctx):
-    """
-    Print the value of the token used by the CLI
-    """
-
-    print(ctx.obj.config.token)
-
-
-@tokens.command()
-@click.pass_context
-def list(ctx):
+def tokens(ctx, current):
     """
     Print the set of available tokens
     """
 
+    if current:
+        print(ctx.obj.config.token)
+        return
     resp = ctx.obj.get('/tokens')
     if resp.ok:
-        tableify(resp.json()['data'])
+        Printer(resp.json()['data'], order=['value', 'private', 'environment']).echo()
     elif resp.status_code == 403:
         print("Please log in to access tokens")
     else:
