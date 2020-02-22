@@ -8,6 +8,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID
 from werkzeug.security import generate_password_hash, check_password_hash
 
+from app.exceptions import ApiException
 
 db = SQLAlchemy()
 
@@ -138,6 +139,16 @@ class User(TimestampMixin, db.Model):
         db.session.add(user)
         db.session.flush()
         return user
+
+    @classmethod
+    def login(cls, email, password):
+        user = User.query.filter(User.email==email).first()
+        if not user:
+            raise ApiException(404, "Could not find that account.")
+        elif not user.check_password(password):
+            raise ApiException(403, "Invalid password.")
+        else:
+            return user
 
     def has_role(self, role: str):
         for token in self.tokens:

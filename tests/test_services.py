@@ -35,8 +35,8 @@ def test_experiment_result_calculator_50_samples(db, client, experiment):
     setup_experiment(client, experiment, exposures_count)
     erc = ExperimentResultCalculator(experiment)
     erc.run()
-    assert erc.nobs == exposures_count
-    assert erc.f_pvalue is not None
+    assert erc.subjects == exposures_count
+    assert erc.pvalue is not None
 
 
 def test_experiment_result_calculator_1_sample(db, client, experiment):
@@ -44,8 +44,8 @@ def test_experiment_result_calculator_1_sample(db, client, experiment):
     setup_experiment(client, experiment, exposures_count)
     erc = ExperimentResultCalculator(experiment)
     erc.run()
-    assert erc.nobs == exposures_count
-    assert erc.f_pvalue is None
+    assert erc.subjects == exposures_count
+    assert erc.pvalue is None
 
 
 def test_experiment_result_calculator_5_samples(db, client, experiment):
@@ -53,5 +53,5 @@ def test_experiment_result_calculator_5_samples(db, client, experiment):
     setup_experiment(client, experiment, exposures_count)
     erc = ExperimentResultCalculator(experiment)
     erc.run()
-    assert erc.nobs == exposures_count
-    assert erc.f_pvalue is not None
+    assert erc.subjects == exposures_count
+    assert erc.pvalue is not None

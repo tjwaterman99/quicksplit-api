@@ -185,11 +185,26 @@ def results(ctx, experiment, staging):
         environment = "production"
         resp = ctx.obj.get('/results', json={'experiment': experiment})
     if ResponseErrorHandler(resp).ok:
-        data = resp.json()['data']['table']
+        data = resp.json()['data']
+        table = data['table']
         Printer(
-            data,
+            table,
+            order=['cohort', 'subjects', 'conversion rate', '95% Conf. Interval'],
             empty_data_message=f"No {environment} data collected for experiment {experiment} yet."
         ).echo()
+        if data['significant']:
+            print(
+                "Congratulations! Your test is statistically significant."
+                "You can be confident that the difference in means between"
+                "the cohorts is due to the changes you've made, and not due"
+                "to random chance."
+            )
+        else:
+            print(
+                "Your test is not statistically significant. Either you need"
+                " to collect more data, or there is no difference in means"
+                " between the cohorts"
+            )
 
 
 @base.command()
@@ -221,7 +236,7 @@ def recent(ctx, staging):
 @click.argument("log", type=click.Choice(['exposure', 'conversion']))
 @click.option('--subject', '-s', required=True)
 @click.option('--experiment', '-e', required=True)
-@click.option('--cohort', '-c', required=True)
+@click.option('--cohort', '-c', required=False)
 @click.option('--value', '-v', required=False)
 @click.option('--staging', required=False, is_flag=True, default=False)
 @click.pass_context
@@ -232,6 +247,8 @@ def log(ctx, log, subject, experiment, cohort, value, staging):
 
     if value and (log == 'exposure'):
         print("Value is not a valid argument when logging an exposure.")
+    if not cohort and (log == 'exposure'):
+        print("Can not log an exposure without a cohort.")
 
     json = {
         'experiment': experiment,

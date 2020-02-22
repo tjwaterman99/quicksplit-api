@@ -207,7 +207,11 @@ def test_results_get(db, client, experiment, exposure):
         'experiment': experiment.name
     })
     assert resp.status_code == 200
-    assert resp.json['data']['experiment'] == str(experiment.name)
+    assert resp.json['data']['experiment']['name'] == str(experiment.name)
+    assert resp.json['data']['scope_name'] == 'production'
+    assert resp.json['data']['subjects'] == 1
+    assert resp.json['data']['significant'] == None
+    assert len(resp.json['data']['table']) == 1
 
 
 def test_activation_resources(db, client, experiment):

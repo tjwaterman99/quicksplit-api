@@ -86,11 +86,7 @@ class LoginResource(Resource):
     def post(self):
         email = request.json['email']
         password = request.json['password']
-        user = User.query.filter(User.email==email).first()
-        if user.check_password(password):
-            return user
-        else:
-            raise ApiException(403, message="Invalid email or password.")
+        return User.login(email, password)
 
 
 class ExperimentsResource(Resource):
@@ -228,15 +224,7 @@ class ResultsResource(Resource):
             raise ApiException(400, "Experiment has not collected any data")
         erc = ExperimentResultCalculator(experiment, scope_name=g.token.scope.name)
         erc.run()
-
-        results = {
-            'experiment': experiment.name,
-            'table': erc.table_json,
-            'p-value': erc.f_pvalue,
-            'significant': erc.significant,
-            'subjects': erc.nobs
-        }
-        return results
+        return erc
 
 
 class ActivateResource(Resource):

@@ -1,3 +1,6 @@
+from dataclasses import dataclass
+from typing import List, Dict, Union
+
 import pandas as pd
 import researchpy as rp
 from statsmodels.formula.api import ols
@@ -8,14 +11,23 @@ from app.models import db
 from app.sql import experiment_loader_query
 
 
+@dataclass
 class ExperimentResultCalculator(object):
+    experiment: str
+    scope_name: str
+    table: List[Dict]
+
+    subjects: int
+    significant: bool
+
+
     def __init__(self, experiment, scope_name="production"):
         self.experiment = experiment
         self.scope_name = scope_name
+
         self.data = None
+        self.df = None
         self.model = None
-        self.table = None
-        self.loaded = False
 
     def load_data(self):
         if self.data is None:
@@ -24,12 +36,12 @@ class ExperimentResultCalculator(object):
             self.data.columns = ['name', 'subject', 'cohort', 'converted', 'conversion_value']
         return self.data
 
-    def load_table(self):
+    def load_df(self):
         if self.data is None:
-            self.load_date()
-        if self.table is None:
-            self.table = rp.summary_cont(self.data.groupby('cohort').converted)
-        return self.table
+            self.load_data()
+        if self.df is None:
+            self.df = rp.summary_cont(self.data.groupby('cohort').converted)
+        return self.df
 
     def load_model(self):
         if self.data is None:
@@ -40,18 +52,31 @@ class ExperimentResultCalculator(object):
 
     def run(self):
         self.load_data()
-        self.load_table()
+        self.load_df()
         self.load_model()
         self.loaded = True
 
-    @property
-    def table_json(self):
-        return self.table.reset_index().to_dict(orient='records')
+    def summary(self):
+        if not self.loaded:
+            self.run()
+        return self.model.summary()
 
     @property
-    def f_pvalue(self):
-        print(self.model.f_pvalue)
-        self.data.to_pickle("data.pickle")
+    def table(self):
+        cdf = self.df.reset_index()
+        cdf.columns = ['cohort', 'subjects', 'sd', 'se', 'conversion rate', 'lci', 'rci']
+        ci_df = cdf[['lci', 'rci']].round(3).fillna("").applymap(lambda x: str(x))
+
+        # Create CI's in a single column
+        ci = "[" + ci_df.lci + ',' + ci_df.rci + ']'
+        ci.name = "95% Conf. Interval"
+
+        cdf['conversion rate'] = cdf['conversion rate'].round(3)
+        result = cdf[['cohort', 'subjects', 'conversion rate']].join(ci).fillna("")
+        return result.to_dict(orient='records')
+
+    @property
+    def pvalue(self):
         if self.model.f_pvalue == np.nan:
             return None
         elif self.model.f_pvalue >= 0:
@@ -61,9 +86,9 @@ class ExperimentResultCalculator(object):
 
     @property
     def significant(self):
-        if self.f_pvalue:
-            return self.f_pvalue < 0.1
+        if self.pvalue:
+            return self.pvalue < 0.1
 
     @property
-    def nobs(self):
+    def subjects(self):
         return self.model.nobs
