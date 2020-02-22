@@ -3,6 +3,8 @@
 ## Finish the CLI and backend
 
 - Build out a better CLI test suite.
+- Do the refactor (routes, setup worker node, etc)
+- Capture more data in the experiments (last exposure, etc)
 
 ## Distribute the CLI on PyPI
 
