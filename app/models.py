@@ -6,6 +6,7 @@ from flask import g, request, current_app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from app.exceptions import ApiException
@@ -132,12 +133,16 @@ class User(TimestampMixin, db.Model):
                 return token
 
     @classmethod
-    def create(cls, email, password, account):
+    def create(cls, email, password):
+        account = Account.create()
         user = cls(email=email, account=account)
-        user.set_password_hash(password)
-        user.set_tokens()
-        db.session.add(user)
-        db.session.flush()
+        try:
+            user.set_password_hash(password)
+            user.set_tokens()
+            db.session.add(user)
+            db.session.flush()
+        except IntegrityError as exc:
+            raise ApiException(403, "User with that email already exists.")
         return user
 
     @classmethod
@@ -179,13 +184,24 @@ class Experiment(TimestampMixin, db.Model):
 
     __table_args__ = (db.UniqueConstraint('user_id', 'name'), )
 
+    @classmethod
+    def create(cls, name):
+        experiment = cls(user=g.user, name=name)
+        try:
+            experiment.activate()
+        except IntegrityError:
+            raise ApiException(403, "Experiment with that name already exists")
+        db.session.add(experiment)
+        db.session.flush()
+        return experiment
+
+
     @property
     def subjects_counter(self):
         if not request or g.token.scope.name == 'production':
             return self.subjects_counter_production
         else:
             return self.subjects_counter_staging
-
 
     @property
     def full(self):
@@ -258,7 +274,7 @@ class Conversion(TimestampMixin, db.Model):
     id: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    exposure_id = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id'), nullable=False, unique=True)
+    exposure_id = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id'), nullable=False)
     scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
     value = db.Column(db.Float())
 

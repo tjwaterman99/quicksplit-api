@@ -14,7 +14,8 @@ RUN pip install flask \
 								pandas \
 								statsmodels \
 								researchpy \
-								terminaltables
+								terminaltables \
+								funcy==1.14
 
 COPY ./app /app
 COPY ./tests /tests

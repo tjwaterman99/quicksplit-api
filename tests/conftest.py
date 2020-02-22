@@ -70,10 +70,7 @@ def staging_scope():
 
 @pytest.fixture()
 def user(db, email, production_scope):
-    plan = Plan.query.filter(Plan.name=="free").first()
-    account = Account.create(plan=plan)
-    user = User.create(email=email, password="password", account=account)
-    return user
+    return User.create(email=email, password="password")
 
 
 @pytest.fixture()

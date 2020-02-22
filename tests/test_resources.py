@@ -1,4 +1,34 @@
+from flask import request
+from pytest import raises
+
+from app.resources import params
 from app.models import User, Experiment, Exposure, Conversion, Scope
+from app.exceptions import ApiException
+
+
+def test_params_decorator(app):
+
+    @params('needed', option=5)
+    def test(*args, **kwargs):
+        return kwargs
+
+    with app.test_request_context(json={'needed': True}):
+        assert test() == {'needed': True, 'option': 5}
+
+    with app.test_request_context(json={'needed': True, 'option': 1}):
+        assert test() == {'needed': True, 'option': 1}
+
+    with app.test_request_context(json={'option': 1}):
+        with raises(ApiException) as exc:
+            test()
+        assert exc.value.status_code == 422
+        assert 'needed' in exc.value.message
+
+    with app.test_request_context(json={'notallowed': 'value', 'needed': True}):
+        with raises(ApiException) as exc:
+            test()
+        assert exc.value.status_code == 422
+        assert 'notallowed' in exc.value.message
 
 
 def test_root_index(client):
@@ -33,12 +63,6 @@ def test_experiment_get(db, client, experiment):
     assert type(resp.json['data']) == list
     assert len(resp.json['data']) == 1
     assert str(experiment.id) == resp.json['data'][0]['id']
-
-
-def test_experiment_id_get(db, client, experiment):
-    resp = client.get(f'/experiments/{str(experiment.id)}')
-    assert resp.status_code == 200
-    assert resp.json['data']['id'] == str(experiment.id)
 
 
 def test_experiment_post(db, client):
@@ -236,28 +260,6 @@ def test_tokens_resource(db, client, user):
     assert resp.json['data'][0]['id'] == str(user.tokens[0].id)
     assert len(resp.json['data']) == 4
     assert resp.json['data'][0]['private'] == True
-
-
-def test_tokens_post_resource(db, client, user):
-    assert len(user.tokens) == 4
-    resp = client.post('/tokens/admin/staging')
-    assert resp.status_code == 200
-    assert len(user.tokens) == 5
-
-    resp = client.post('/tokens/admin/production')
-    assert resp.status_code == 200
-    assert len(user.tokens) == 6
-
-    resp = client.post('/tokens/public/staging')
-    assert resp.status_code == 200
-    assert len(user.tokens) == 7
-
-    resp = client.post('/tokens/public/production')
-    assert resp.status_code == 200
-    assert len(user.tokens) == 8
-
-    resp = client.get('/tokens')
-    assert len(resp.json['data']) == 8
 
 
 def test_staging_client_inserts_to_staging(db, admin_staging_client, user, experiment):

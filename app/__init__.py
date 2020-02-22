@@ -1,11 +1,11 @@
 import os
 
-from flask import Flask, current_app, json, make_response
+from flask import Flask, current_app, json, make_response, request, g
 from flask_migrate import Migrate
 from werkzeug.utils import import_string
 
-from app.resources import api, load_user
-from app.models import db, Account, User, Experiment, Subject, Exposure, Conversion, Cohort, Scope
+from app.resources import api
+from app.models import db, Account, User, Token, Experiment, Subject, Exposure, Conversion, Cohort, Scope
 from app.exceptions import ApiException
 
 
@@ -28,6 +28,21 @@ def handle_uncaught_exception(exc):
     return make_response(json.dumps(resp), 500)
 
 
+def load_user():
+    token_value = request.headers.get('Authorization')
+    if not token_value:
+        g.user = None
+        g.token = None
+        return
+
+    token = Token.query.filter(Token.value==token_value).first()
+    if not token:
+        raise ApiException(403, "Permission denied. Invalid token.")
+
+    g.user = token.user
+    g.token = token
+
+
 def shell_context():
     return {
         'db': db,
@@ -39,6 +54,7 @@ def shell_context():
         'Conversion': Conversion,
         'Cohort': Cohort,
         'Scope': Scope,
+        'Token': Token,
         'user': User.query.first()
     }
 

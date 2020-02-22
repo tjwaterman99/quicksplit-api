@@ -252,10 +252,13 @@ def log(ctx, log, subject, experiment, cohort, value, staging):
 
     json = {
         'experiment': experiment,
-        'cohort': cohort,
         'subject': subject,
-        'value': value
     }
+
+    if log == 'exposure':
+        json.update(cohort=cohort)
+    else:
+        json.update(value=value)
 
     if staging:
         with StagingClient(ctx.obj) as client:
