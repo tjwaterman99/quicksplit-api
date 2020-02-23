@@ -12,7 +12,7 @@
 
 ## Configure domains
 - X api
-- www [pending https]
+- www [pending https]. It looks like we have to ["delegate"](https://docs.netlify.com/domains-https/netlify-dns/delegate-to-netlify/) the AWS nameservers to the Netlify nameservers. I'm not sure how that will affect the `api` subdomain though.
 
 ## Distribute the CLI on PyPI
 - CI releases on tags
