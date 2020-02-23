@@ -58,7 +58,7 @@ def shell_context():
         'Cohort': Cohort,
         'Scope': Scope,
         'Token': Token,
-        'user': User.query.first()
+        'user': User.query.order_by(User.created_at.desc()).first()
     }
 
 
