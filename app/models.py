@@ -428,7 +428,7 @@ class Conversion(TimestampMixin, db.Model):
 
     @classmethod
     def create(cls, subject_name, experiment_name, value=None):
-        # Note that using this method requires a request context since we depend on
+        # Note that using this function requires a request context since we depend on
         # the user being pulled from `g`. If we move this to a worker node
         # we'll have to pass in a user_id to refetch the user.
         experiment = g.user.experiments.filter(Experiment.name==experiment_name).first()
@@ -446,9 +446,6 @@ class Conversion(TimestampMixin, db.Model):
         if not exposure:
             raise ApiException(404, "Subject does not have an exposure for that experiment yet")
 
-        # This needs to return the conversion id, which can then be inserted
-        # into the cohort, subject, and experiment tables as the `last_conversion_id_{scope}`
-        # field
         conversion_insert = insert(Conversion.__table__).values(
             exposure_id=exposure.id,
             value=value,
