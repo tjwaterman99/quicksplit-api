@@ -146,8 +146,11 @@ def experiments(ctx, staging):
     if ResponseErrorHandler(resp).ok:
         data = resp.json()['data']
         Printer(data,
-                order=['name', 'subjects_counter', 'active', 'full'],
-                rename={'subjects_counter': 'subjects'},
+                order=['name', 'subjects_counter', 'active', 'full', 'last_exposure_at'],
+                rename={
+                    'subjects_counter': 'subjects',
+                    'last_exposure_at': 'last exposure',
+                },
                 empty_data_message="No experiments created yet. \nCreate an experiment with `quicksplit create my-experiment`"
         ).echo()
 
