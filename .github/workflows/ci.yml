@@ -32,9 +32,9 @@ jobs:
           docker push registry.heroku.com/quick-split/web
           docker push registry.heroku.com/quick-split/release
           heroku container:release --app $HEROKU_APP_NAME web release
-      - name: Test web requests against Heroku staging
-        run: docker-compose run --rm -e QUICKSPLIT_API_URL=https://quick-split.herokuapp.com web pytest tests/test_api.py
+      - name: Test web requests against Heroku release
+        run: docker-compose run --rm -e QUICKSPLIT_API_URL=https://api.quicksplit.io web pytest tests/test_api.py
         if: github.ref == 'refs/heads/master'
-      - name: Test CLI against Heroku staging
-        run: docker-compose run --rm -e QUICKSPLIT_API_URL=https://quick-split.herokuapp.com web pytest tests/test_cli.py
+      - name: Test CLI against Heroku release
+        run: docker-compose run --rm -e QUICKSPLIT_API_URL=https://api.quicksplit.io web pytest tests/test_cli.py
         if: github.ref == 'refs/heads/master'

@@ -3,7 +3,7 @@
 The developer tool for fast, simple A/B tests.
 
 - [Homepage](https://quizzical-mahavira-ad9464.netlify.com/)
-- [API](https://quick-split.herokuapp.com)
+- [API](https://api.quicksplit.io)
 
 
 ## Development
