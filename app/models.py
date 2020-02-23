@@ -5,6 +5,7 @@ import datetime as dt
 from flask import g, request, current_app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -15,8 +16,72 @@ db = SQLAlchemy()
 
 
 class TimestampMixin(object):
+
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+@dataclass(init=False)
+class EventTrackerMixin(object):
+
+    last_exposure_at: str
+    last_conversion_at: str
+
+    @declared_attr
+    def last_exposure_id_staging(cls):
+        return db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id', name='experiment_last_exposure_id_staging_fkey'))
+
+    @declared_attr
+    def last_exposure_id_production(cls):
+        return db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id', name='experiment_last_exposure_id_production_fkey'))
+
+    @declared_attr
+    def last_conversion_id_staging(cls):
+        return db.Column(UUID(as_uuid=True), db.ForeignKey('conversion.id', name='experiment_last_conversion_id_staging_fkey'))
+
+    @declared_attr
+    def last_conversion_id_production(cls):
+        return db.Column(UUID(as_uuid=True), db.ForeignKey('conversion.id', name='experiment_last_conversion_id_production_fkey'))
+
+    @declared_attr
+    def last_exposure_staging(cls):
+        return db.relationship("Exposure", foreign_keys=[cls.last_exposure_id_staging], lazy="joined")
+
+    @declared_attr
+    def last_exposure_production(cls):
+        return db.relationship("Exposure", foreign_keys=[cls.last_exposure_id_production], lazy="joined")
+
+    @declared_attr
+    def last_conversion_staging(cls):
+        return db.relationship("Conversion", foreign_keys=[cls.last_conversion_id_staging], lazy="joined")
+
+    @declared_attr
+    def last_conversion_production(cls):
+        return db.relationship("Conversion", foreign_keys=[cls.last_conversion_id_production], lazy="joined")
+
+    @property
+    def last_exposure(self):
+        if not request or g.token.scope.name == 'production':
+            return self.last_exposure_production
+        else:
+            return self.last_exposure_staging
+
+    @property
+    def last_conversion(self):
+        if not request or g.token.scope.name == 'production':
+            return self.last_conversion_production
+        else:
+            return self.last_conversion_staging
+
+    @property
+    def last_exposure_at(self):
+        if self.last_exposure:
+            return self.last_exposure.last_seen_at
+
+    @property
+    def last_conversion_at(self):
+        if self.last_conversion:
+            return self.last_conversion.last_seen_at
 
 
 @dataclass
@@ -164,7 +229,7 @@ class User(TimestampMixin, db.Model):
 
 
 @dataclass
-class Experiment(TimestampMixin, db.Model):
+class Experiment(EventTrackerMixin, TimestampMixin, db.Model):
     name: str
     full: bool
     subjects_counter: int
@@ -181,17 +246,8 @@ class Experiment(TimestampMixin, db.Model):
     subjects_counter_staging = db.Column(db.Integer(), nullable=False, default=0)
     active = db.Column(db.Boolean(), nullable=False, index=True, default=False)
     last_activated_at = db.Column(db.DateTime(timezone=True), nullable=False, index=True, default=func.now())  # We should allow this to be nullable
-    last_exposure_id_staging = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id', name='experiment_last_exposure_id_staging_fkey'))
-    last_exposure_id_production = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id', name='experiment_last_exposure_id_production_fkey'))
-    last_conversion_id_staging = db.Column(UUID(as_uuid=True), db.ForeignKey('conversion.id', name='experiment_last_conversion_id_staging_fkey'))
-    last_conversion_id_production = db.Column(UUID(as_uuid=True), db.ForeignKey('conversion.id', name='experiment_last_conversion_id_production_fkey'))
 
     __table_args__ = (db.UniqueConstraint('user_id', 'name'), )
-
-    last_exposure_staging = db.relationship("Exposure", foreign_keys=[last_exposure_id_staging])
-    last_exposure_production = db.relationship("Exposure", foreign_keys=[last_exposure_id_production])
-    last_conversion_staging = db.relationship("Conversion", foreign_keys=[last_conversion_id_staging])
-    last_conversion_production = db.relationship("Conversion", foreign_keys=[last_conversion_id_production])
 
     @classmethod
     def create(cls, name):
@@ -234,43 +290,24 @@ class Experiment(TimestampMixin, db.Model):
         db.session.flush()
 
 
-class Subject(TimestampMixin, db.Model):
+class Subject(EventTrackerMixin, TimestampMixin, db.Model):
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False)
     scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
     name = db.Column(db.String(length=64), nullable=False, index=True)
 
-    last_exposure_id_staging = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id', name='subject_last_exposure_id_staging_fkey'))
-    last_exposure_id_production = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id', name='subject_last_exposure_id_production_fkey'))
-    last_conversion_id_staging = db.Column(UUID(as_uuid=True), db.ForeignKey('conversion.id', name='subject_last_conversion_id_staging_fkey'))
-    last_conversion_id_production = db.Column(UUID(as_uuid=True), db.ForeignKey('conversion.id', name='subject_last_conversion_id_production_fkey'))
-
     __table_args__ = (db.UniqueConstraint('account_id', 'name', 'scope_id'), )
 
     account = db.relationship('Account', backref=db.backref('subjects', lazy='dynamic'))
     scope = db.relationship('Scope', lazy='joined')
-    last_exposure_staging = db.relationship("Exposure", foreign_keys=[last_exposure_id_staging])
-    last_exposure_production = db.relationship("Exposure", foreign_keys=[last_exposure_id_production])
-    last_conversion_staging = db.relationship("Conversion", foreign_keys=[last_conversion_id_staging])
-    last_conversion_production = db.relationship("Conversion", foreign_keys=[last_conversion_id_production])
 
 
-class Cohort(TimestampMixin, db.Model):
+class Cohort(EventTrackerMixin, TimestampMixin, db.Model):
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), nullable=False)
     name = db.Column(db.String(length=64), nullable=False, index=True)
 
-    last_exposure_id_staging = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id', name='cohort_last_exposure_id_staging_fkey'))
-    last_exposure_id_production = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id', name='cohort_last_exposure_id_production_fkey'))
-    last_conversion_id_staging = db.Column(UUID(as_uuid=True), db.ForeignKey('conversion.id', name='cohort_last_conversion_id_staging_fkey'))
-    last_conversion_id_production = db.Column(UUID(as_uuid=True), db.ForeignKey('conversion.id', name='cohort_last_conversion_id_production_fkey'))
-
     experiment = db.relationship('Experiment', backref='cohorts')
-    last_exposure_staging = db.relationship("Exposure", foreign_keys=[last_exposure_id_staging])
-    last_exposure_production = db.relationship("Exposure", foreign_keys=[last_exposure_id_production])
-    last_conversion_staging = db.relationship("Conversion", foreign_keys=[last_conversion_id_staging])
-    last_conversion_production = db.relationship("Conversion", foreign_keys=[last_conversion_id_production])
-
 
     __table_args__ = (db.UniqueConstraint('experiment_id', 'name'), )
 
