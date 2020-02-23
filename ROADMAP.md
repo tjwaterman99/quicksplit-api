@@ -16,7 +16,8 @@
 
 ## Distribute the CLI on PyPI
 - CI releases on tags
-- Test installs against the production instance
+- Test releases against the production instance
+- Test previous releases against the production instance [all production releases should include these tests]
 
 ## Create a landing page
 - Install instructions
