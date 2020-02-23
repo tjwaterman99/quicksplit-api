@@ -6,18 +6,19 @@
 - Do the refactor (routes, etc)
 - Capture more data in the experiments (last exposure, etc)
 
-## Distribute the CLI on PyPI
-
-## Create a landing page with install, usage instructions
-
 ## Scale Heroku
-- pipelines
-- hobby web
-- hobby database (10M rows))
+- X hobby web
+- X hobby database (10M rows))
 
 ## Configure domains
 - api
 - www
+
+## Distribute the CLI on PyPI
+
+## Create a landing page
+- Install instructions
+- Styling
 
 ## Youtube Demo video, YT ads, start driving traffic
 
