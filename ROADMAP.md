@@ -23,5 +23,15 @@
 - Styling
 
 ## Youtube Demo video, YT ads, start driving traffic
+- Script written
+- Conversion rate tracking
+- Basic funnel view
 
-## Create logging (papertrail, /events route), and application failure alerts
+## Application performance monitor and logging
+- Set up Papertrail
+- Add /events route and logging in the CLI
+
+## Notifications
+- New user signup confirmation
+- New user signup notification to me
+- Password resets
