@@ -11,10 +11,12 @@
 - X hobby database (10M rows))
 
 ## Configure domains
-- api
-- www
+- X api
+- www [pending https]
 
 ## Distribute the CLI on PyPI
+- CI releases on tags
+- Test installs against the production instance
 
 ## Create a landing page
 - Install instructions
