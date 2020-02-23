@@ -86,6 +86,17 @@ def login(ctx, email, password):
 
 @base.command()
 @click.pass_context
+def logout(ctx):
+    """
+    Log out of quicksplit.io
+    """
+
+    ctx.obj.config.token = None
+    ctx.obj.config.dump_config()
+
+
+@base.command()
+@click.pass_context
 def whoami(ctx):
     """
     Print the email address of the current account

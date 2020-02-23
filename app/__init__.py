@@ -35,6 +35,9 @@ def load_user():
         g.token = None
         return
 
+    # Note that public routes will reject a user with an invalid token. That
+    # seems a bit counter-intuitive, since those routes shouldn't be validating
+    # the token.
     token = Token.query.filter(Token.value==token_value).first()
     if not token:
         raise ApiException(403, "Permission denied. Invalid token.")

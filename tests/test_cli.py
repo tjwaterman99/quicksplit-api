@@ -227,6 +227,18 @@ def test_cli_can_list_recent(experiment_name):
     assert experiment_name in resp.stdout.decode()
 
 
+def test_cli_can_logout():
+    cmd = f'quicksplit logout'.split()
+    resp = subprocess.run(cmd, capture_output=True)
+    assert resp.returncode == 0
+
+    cmd = f'quicksplit experiments'.split()
+    resp = subprocess.run(cmd, capture_output=True)
+    assert resp.returncode == 0
+    assert '403' in resp.stdout.decode()
+
+
+
 def test_printer():
     input = [{"a": 1, "b": 2, "c": 3}, {"a": 3, "b": 4, "c": 5}]
     printer = Printer(input, bold_header=False, color=None)
