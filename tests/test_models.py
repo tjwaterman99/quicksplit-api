@@ -19,12 +19,20 @@ def test_user_has_role(user):
     assert user.has_role('admin')
 
 
-def test_experiment_create(user, db):
+def test_experiment_init(user, db):
     experiment = Experiment(user=user, name="Test experiment")
     experiment.activate()
     assert experiment.user == user
     assert experiment in user.experiments.all()
     assert experiment.active == True
+
+
+def test_experiment_create(app, user, db):
+    with app.test_request_context(headers={'Authorization': user.admin_token.value}):
+        app.preprocess_request()
+        experiment = Experiment.create(name="test experiment")
+        assert experiment.user == user
+        assert experiment.name == "test experiment"
 
 
 def test_experiment_acivate_deactivate(user, db, experiment):
@@ -35,7 +43,7 @@ def test_experiment_acivate_deactivate(user, db, experiment):
     assert experiment.active == True
 
 
-def test_subject_create(db, user, production_scope):
+def test_subject_init(db, user, production_scope):
     subject = Subject(name='test-subject-1', account=user.account, scope=production_scope)
     db.session.add(subject)
     db.session.flush()
@@ -43,7 +51,7 @@ def test_subject_create(db, user, production_scope):
     assert subject in user.account.subjects.all()
 
 
-def test_exposure_create(db, experiment, cohort, subject, production_scope):
+def test_exposure_init(db, experiment, cohort, subject, production_scope):
     exposure = Exposure(experiment=experiment, cohort=cohort, subject=subject, scope=production_scope)
     db.session.add(exposure)
     db.session.flush()
@@ -52,8 +60,30 @@ def test_exposure_create(db, experiment, cohort, subject, production_scope):
     assert exposure in experiment.exposures.all()
 
 
-def test_conversion_create(db, exposure, production_scope):
+def test_exposure_create(db, app, user, experiment, cohort, subject):
+    with app.test_request_context(headers={'Authorization': user.admin_token.value}):
+        app.preprocess_request()
+        exposure = Exposure.create(
+            subject_name=subject.name,
+            cohort_name=cohort.name,
+            experiment_name=experiment.name
+        )
+        assert exposure
+
+
+def test_conversion_init(db, exposure, production_scope):
     conversion = Conversion(exposure=exposure, scope=production_scope)
     db.session.add(conversion)
     db.session.flush()
     assert conversion == exposure.conversion
+
+
+def test_conversion_create(db, app, user, experiment, subject, exposure):
+    with app.test_request_context(headers={'Authorization': user.admin_token.value}):
+        app.preprocess_request()
+        conversion = Conversion.create(
+            subject_name=subject.name,
+            experiment_name=experiment.name,
+            value=20
+        )
+        assert conversion

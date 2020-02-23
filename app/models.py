@@ -6,7 +6,7 @@ from flask import g, request, current_app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, insert
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -334,6 +334,60 @@ class Exposure(TimestampMixin, db.Model):
     def __hash__(self):
         return hash(str(self.id))
 
+    @classmethod
+    def create(cls, subject_name, cohort_name, experiment_name):
+        # Note that using this method requires a request context since we depend on
+        # the user being pulled from `g`. If we move this to a worker node
+        # we'll have to pass in a user_id to refetch the user.
+        experiment = g.user.experiments.filter(Experiment.name==experiment_name).first()
+        if not experiment:
+            raise ApiException(404, "Experiment does not exist")
+
+        if experiment.full:
+            raise ApiException(422, "Experiment has reached max exposures limit")
+
+        if not experiment.active:
+            raise ApiException(422, "Experiment is not active")
+
+        subject_insert = insert(Subject.__table__).values(
+            account_id=g.user.account_id,
+            name=subject_name,
+            scope_id=g.token.scope.id
+        ).on_conflict_do_update(
+            constraint='subject_account_id_name_scope_id_key',
+            set_={'updated_at': dt.datetime.now()}
+        ).returning(Subject.id)
+
+        cohort_insert = insert(Cohort.__table__).values(
+            name=cohort_name,
+            experiment_id=experiment.id,
+        ).on_conflict_do_update(
+            constraint='cohort_experiment_id_name_key',
+            set_={'updated_at': dt.datetime.now()}
+        ).returning(Cohort.id)
+
+        subject_id = db.session.execute(subject_insert).fetchone()[0]
+        cohort_id = db.session.execute(cohort_insert).fetchone()[0]
+
+        exposure_insert = insert(Exposure.__table__).values(
+            experiment_id=experiment.id,
+            subject_id=subject_id,
+            cohort_id=cohort_id,
+            scope_id=g.token.scope.id
+        ).on_conflict_do_nothing().returning(Exposure.id)
+
+        exposure_id = db.session.execute(exposure_insert).fetchone()
+        if exposure_id:
+            if g.token.scope.name == 'production':
+                experiment.subjects_counter_production = Experiment.subjects_counter_production + 1
+            elif g.token.scope.name == 'staging':
+                experiment.subjects_counter_staging = Experiment.subjects_counter_staging + 1
+            else:
+                current_app.logger.error(f"Unexpected scope name {scope.name}")
+            db.session.add(experiment)
+        db.session.flush()
+        return True
+
 
 class Conversion(TimestampMixin, db.Model):
     id: str
@@ -347,3 +401,37 @@ class Conversion(TimestampMixin, db.Model):
     __table_args__ = (db.UniqueConstraint('exposure_id', 'scope_id'), )
 
     scope = db.relationship('Scope', lazy='joined')
+
+    @classmethod
+    def create(cls, subject_name, experiment_name, value=None):
+        # Note that using this method requires a request context since we depend on
+        # the user being pulled from `g`. If we move this to a worker node
+        # we'll have to pass in a user_id to refetch the user.
+        experiment = g.user.experiments.filter(Experiment.name==experiment_name).first()
+        if not experiment:
+            raise ApiException(404, "Experiment does not exist")
+
+        subject = Subject.query.filter(Subject.name==subject_name)\
+                               .filter(Subject.account==experiment.user.account)\
+                               .first()
+        if not subject:
+            raise ApiException(404, "Subject does not exist")
+        exposure = Exposure.query.filter(Exposure.subject_id==subject.id)\
+                                 .filter(Exposure.experiment_id==experiment.id)\
+                                 .first()
+        if not exposure:
+            raise ApiException(404, "Subject does not have an exposure for that experiment yet")
+
+        # This needs to return the conversion id, which can then be inserted
+        # into the cohort, subject, and experiment tables as the `last_conversion_id_{scope}`
+        # field
+        conversion_insert = insert(Conversion.__table__).values(
+            exposure_id=exposure.id,
+            value=value,
+            scope_id=g.token.scope.id
+        ).on_conflict_do_update(
+            constraint='conversion_exposure_id_scope_id_key',
+            set_={'updated_at': dt.datetime.now()}
+        )
+        db.session.execute(conversion_insert)
+        return True
