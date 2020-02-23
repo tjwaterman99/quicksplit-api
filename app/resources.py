@@ -168,6 +168,9 @@ class ConversionsResource(Resource):
         if not exposure:
             raise ApiException(404, "Subject does not have an exposure for that experiment yet")
 
+        # This needs to return the conversion id, which can then be inserted
+        # into the cohort, subject, and experiment tables as the `last_conversion_id_{scope}`
+        # field
         conversion_insert = insert(Conversion.__table__).values(
             exposure_id=exposure.id,
             value=value,

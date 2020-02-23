@@ -181,8 +181,17 @@ class Experiment(TimestampMixin, db.Model):
     subjects_counter_staging = db.Column(db.Integer(), nullable=False, default=0)
     active = db.Column(db.Boolean(), nullable=False, index=True, default=False)
     last_activated_at = db.Column(db.DateTime(timezone=True), nullable=False, index=True, default=func.now())  # We should allow this to be nullable
+    last_exposure_id_staging = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id', name='experiment_last_exposure_id_staging_fkey'))
+    last_exposure_id_production = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id', name='experiment_last_exposure_id_production_fkey'))
+    last_conversion_id_staging = db.Column(UUID(as_uuid=True), db.ForeignKey('conversion.id', name='experiment_last_conversion_id_staging_fkey'))
+    last_conversion_id_production = db.Column(UUID(as_uuid=True), db.ForeignKey('conversion.id', name='experiment_last_conversion_id_production_fkey'))
 
     __table_args__ = (db.UniqueConstraint('user_id', 'name'), )
+
+    last_exposure_staging = db.relationship("Exposure", foreign_keys=[last_exposure_id_staging])
+    last_exposure_production = db.relationship("Exposure", foreign_keys=[last_exposure_id_production])
+    last_conversion_staging = db.relationship("Conversion", foreign_keys=[last_conversion_id_staging])
+    last_conversion_production = db.relationship("Conversion", foreign_keys=[last_conversion_id_production])
 
     @classmethod
     def create(cls, name):
@@ -194,7 +203,6 @@ class Experiment(TimestampMixin, db.Model):
         db.session.add(experiment)
         db.session.flush()
         return experiment
-
 
     @property
     def subjects_counter(self):
@@ -232,10 +240,19 @@ class Subject(TimestampMixin, db.Model):
     scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
     name = db.Column(db.String(length=64), nullable=False, index=True)
 
+    last_exposure_id_staging = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id', name='subject_last_exposure_id_staging_fkey'))
+    last_exposure_id_production = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id', name='subject_last_exposure_id_production_fkey'))
+    last_conversion_id_staging = db.Column(UUID(as_uuid=True), db.ForeignKey('conversion.id', name='subject_last_conversion_id_staging_fkey'))
+    last_conversion_id_production = db.Column(UUID(as_uuid=True), db.ForeignKey('conversion.id', name='subject_last_conversion_id_production_fkey'))
+
     __table_args__ = (db.UniqueConstraint('account_id', 'name', 'scope_id'), )
 
     account = db.relationship('Account', backref=db.backref('subjects', lazy='dynamic'))
     scope = db.relationship('Scope', lazy='joined')
+    last_exposure_staging = db.relationship("Exposure", foreign_keys=[last_exposure_id_staging])
+    last_exposure_production = db.relationship("Exposure", foreign_keys=[last_exposure_id_production])
+    last_conversion_staging = db.relationship("Conversion", foreign_keys=[last_conversion_id_staging])
+    last_conversion_production = db.relationship("Conversion", foreign_keys=[last_conversion_id_production])
 
 
 class Cohort(TimestampMixin, db.Model):
@@ -243,7 +260,17 @@ class Cohort(TimestampMixin, db.Model):
     experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), nullable=False)
     name = db.Column(db.String(length=64), nullable=False, index=True)
 
+    last_exposure_id_staging = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id', name='cohort_last_exposure_id_staging_fkey'))
+    last_exposure_id_production = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id', name='cohort_last_exposure_id_production_fkey'))
+    last_conversion_id_staging = db.Column(UUID(as_uuid=True), db.ForeignKey('conversion.id', name='cohort_last_conversion_id_staging_fkey'))
+    last_conversion_id_production = db.Column(UUID(as_uuid=True), db.ForeignKey('conversion.id', name='cohort_last_conversion_id_production_fkey'))
+
     experiment = db.relationship('Experiment', backref='cohorts')
+    last_exposure_staging = db.relationship("Exposure", foreign_keys=[last_exposure_id_staging])
+    last_exposure_production = db.relationship("Exposure", foreign_keys=[last_exposure_id_production])
+    last_conversion_staging = db.relationship("Conversion", foreign_keys=[last_conversion_id_staging])
+    last_conversion_production = db.relationship("Conversion", foreign_keys=[last_conversion_id_production])
+
 
     __table_args__ = (db.UniqueConstraint('experiment_id', 'name'), )
 
@@ -257,12 +284,13 @@ class Exposure(TimestampMixin, db.Model):
     subject_id = db.Column(UUID(as_uuid=True), db.ForeignKey('subject.id'), nullable=False)
     experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), nullable=False)
     scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
+    last_seen_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     __table_args__ = (db.UniqueConstraint('subject_id', 'experiment_id', 'scope_id'), )
 
-    cohort = db.relationship('Cohort', backref=db.backref('exposures', lazy='dynamic'), lazy="joined")
-    subject = db.relationship('Subject', backref=db.backref('exposures', lazy='dynamic'), lazy="joined")
-    experiment = db.relationship('Experiment', backref=db.backref('exposures', lazy='dynamic'), lazy="joined")
+    cohort = db.relationship('Cohort', backref=db.backref('exposures', lazy='dynamic'), foreign_keys=[cohort_id], lazy="joined")
+    subject = db.relationship('Subject', backref=db.backref('exposures', lazy='dynamic'), foreign_keys=[subject_id], lazy="joined")
+    experiment = db.relationship('Experiment', backref=db.backref('exposures', lazy='dynamic'), lazy="joined", foreign_keys=[experiment_id])
     scope = db.relationship('Scope', lazy='joined')
     conversion = db.relationship('Conversion', backref=db.backref('exposure', uselist=False, lazy="joined"), uselist=False, lazy="joined")
 
@@ -277,6 +305,7 @@ class Conversion(TimestampMixin, db.Model):
     exposure_id = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id'), nullable=False)
     scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
     value = db.Column(db.Float())
+    last_seen_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     __table_args__ = (db.UniqueConstraint('exposure_id', 'scope_id'), )
 
