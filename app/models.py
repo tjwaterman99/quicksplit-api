@@ -197,6 +197,12 @@ class User(TimestampMixin, db.Model):
             if token.role.name == "admin" and token.scope.name == "production":
                 return token
 
+    @property
+    def admin_token_staging(self):
+        for token in self.tokens:
+            if token.role.name == "admin" and token.scope.name == "staging":
+                return token
+
     @classmethod
     def create(cls, email, password):
         account = Account.create()
@@ -355,18 +361,17 @@ class Exposure(TimestampMixin, db.Model):
             scope_id=g.token.scope.id
         ).on_conflict_do_update(
             constraint='subject_account_id_name_scope_id_key',
-            set_={'updated_at': dt.datetime.now()}
+            set_={'updated_at': func.now()}
         ).returning(Subject.id)
+        subject_id = db.session.execute(subject_insert).fetchone()[0]
 
         cohort_insert = insert(Cohort.__table__).values(
             name=cohort_name,
             experiment_id=experiment.id,
         ).on_conflict_do_update(
             constraint='cohort_experiment_id_name_key',
-            set_={'updated_at': dt.datetime.now()}
+            set_={'updated_at': func.now()}
         ).returning(Cohort.id)
-
-        subject_id = db.session.execute(subject_insert).fetchone()[0]
         cohort_id = db.session.execute(cohort_insert).fetchone()[0]
 
         exposure_insert = insert(Exposure.__table__).values(
@@ -374,21 +379,40 @@ class Exposure(TimestampMixin, db.Model):
             subject_id=subject_id,
             cohort_id=cohort_id,
             scope_id=g.token.scope.id
-        ).on_conflict_do_nothing().returning(Exposure.id)
-
+        ).on_conflict_do_update(
+            constraint="exposure_subject_id_experiment_id_scope_id_key",
+            set_={'last_seen_at': func.now()}
+        ).returning(Exposure.id)
         exposure_id = db.session.execute(exposure_insert).fetchone()
-        if exposure_id:
-            if g.token.scope.name == 'production':
+
+        subject = Subject.query.get(subject_id)
+        cohort = Cohort.query.get(cohort_id)
+        exposure = Exposure.query.get(exposure_id)
+        production = g.token.scope.name == 'production'
+
+        if production:
+            experiment.last_exposure_production = exposure
+            subject.last_exposure_production = exposure
+            cohort.last_exposure_production = exposure
+            if exposure.created_at != exposure.updated_at:
                 experiment.subjects_counter_production = Experiment.subjects_counter_production + 1
-            elif g.token.scope.name == 'staging':
+            else:
+                experiment.subjects_counter_production = 1
+        else:
+            experiment.last_exposure_staging = exposure
+            subject.last_exposure_staging = exposure
+            cohort.last_exposure_staging = exposure
+            if exposure.created_at != exposure.updated_at:
                 experiment.subjects_counter_staging = Experiment.subjects_counter_staging + 1
             else:
-                current_app.logger.error(f"Unexpected scope name {scope.name}")
-            db.session.add(experiment)
+                experiment.subjects_counter_staging = 1
+
+        db.session.add_all([experiment, subject, cohort])
         db.session.flush()
-        return True
+        return exposure
 
 
+@dataclass
 class Conversion(TimestampMixin, db.Model):
     id: str
 
@@ -431,7 +455,22 @@ class Conversion(TimestampMixin, db.Model):
             scope_id=g.token.scope.id
         ).on_conflict_do_update(
             constraint='conversion_exposure_id_scope_id_key',
-            set_={'updated_at': dt.datetime.now()}
-        )
-        db.session.execute(conversion_insert)
-        return True
+            set_={'last_seen_at': dt.datetime.now()}
+        ).returning(Conversion.id)
+        conversion_id = db.session.execute(conversion_insert).fetchall()[0]
+
+        conversion = Conversion.query.get(conversion_id)
+        production = g.token.scope.name == 'production'
+
+        if production:
+            experiment.last_conversion_production = conversion
+            subject.last_conversion_production = conversion
+            conversion.exposure.cohort.last_conversion_production = conversion
+        else:
+            experiment.last_conversion_staging = conversion
+            subject.last_conversion_staging = conversion
+            conversion.exposure.cohort.last_conversion_staging = conversion
+
+        db.session.add_all([experiment, subject, conversion])
+        db.session.flush()
+        return conversion

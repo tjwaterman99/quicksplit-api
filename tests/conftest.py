@@ -90,6 +90,14 @@ def subject(db, user, production_scope):
 
 
 @pytest.fixture()
+def subject_staging(db, user, staging_scope):
+    subject = Subject(account=user.account, name='test-subject-1', scope=staging_scope)
+    db.session.add(subject)
+    db.session.flush()
+    return subject
+
+
+@pytest.fixture()
 def cohort(db, experiment):
     cohort = Cohort(name='experimental', experiment=experiment)
     db.session.add(cohort)
@@ -101,6 +109,16 @@ def cohort(db, experiment):
 def exposure(db, subject, experiment, cohort, production_scope):
     exposure = Exposure(subject=subject, experiment=experiment, cohort=cohort, scope=production_scope)
     experiment.subjects_counter_production += 1
+    db.session.add(exposure)
+    db.session.add(experiment)
+    db.session.flush()
+    return exposure
+
+
+@pytest.fixture()
+def exposure_staging(db, subject_staging, experiment, cohort, staging_scope):
+    exposure = Exposure(subject=subject_staging, experiment=experiment, cohort=cohort, scope=staging_scope)
+    experiment.subjects_counter_staging += 1
     db.session.add(exposure)
     db.session.add(experiment)
     db.session.flush()

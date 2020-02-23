@@ -213,8 +213,6 @@ def test_conversions_post_duplicate(db, client, experiment, exposure, subject):
 
 # Conversions should still be recorded for an inactive experiment
 def test_conversions_post_inactive_experiment(db, client, experiment, exposure, conversion, subject):
-    # This won't update the subjects counter on the experiment. We should
-    # Really move the business logic from the resource to the model
     experiment.deactivate()
     resp = client.post('/conversions', json={
         'experiment': experiment.name,
@@ -222,7 +220,6 @@ def test_conversions_post_inactive_experiment(db, client, experiment, exposure, 
         'value': 15.0
     })
     assert resp.status_code == 200
-    db.session.refresh(exposure)
     assert exposure.conversion.value == conversion.value
 
 
