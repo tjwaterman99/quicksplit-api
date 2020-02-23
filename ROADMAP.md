@@ -36,3 +36,6 @@
 - New user signup confirmation
 - New user signup notification to me
 - Password resets
+
+## Review apps, Heroku pipelines, prod & staging instances
+- Don't use docker-based deploys for Heroku, since Heroku doesn't support pipelines for those apps
