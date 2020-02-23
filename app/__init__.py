@@ -10,7 +10,7 @@ from app.exceptions import ApiException
 
 
 def handle_api_exception(exc):
-    current_app.logger.error("Handling api exception")
+    current_app.logger.error(f"Handling api exception: {exc}")
     if not current_app.testing:
         db.session.rollback()
     return make_response(json.dumps(exc), exc.status_code)
