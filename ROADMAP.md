@@ -2,7 +2,7 @@
 
 ## Finish the CLI and backend
 
-- Build out a better CLI test suite.
+- X Build out a better CLI test suite.
 - Do the refactor (routes, etc)
 - Capture more data in the experiments (last exposure, etc)
 
@@ -12,7 +12,7 @@
 
 ## Configure domains
 - X api
-- www [pending https]. It looks like we have to ["delegate"](https://docs.netlify.com/domains-https/netlify-dns/delegate-to-netlify/) the AWS nameservers to the Netlify nameservers. I'm not sure how that will affect the `api` subdomain though.
+- X www [pending https].
 
 ## Distribute the CLI on PyPI
 - CI releases on tags
