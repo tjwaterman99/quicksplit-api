@@ -1,0 +1,6 @@
+# action.yml
+name: 'Deploy CLI'
+description: 'Builds and deploys the CLI on PyPI'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
