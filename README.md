@@ -2,7 +2,7 @@
 
 The developer tool for fast, simple A/B tests.
 
-- [Homepage](https://quizzical-mahavira-ad9464.netlify.com/)
+- [Homepage](https://www.quicksplit.io/)
 - [API](https://api.quicksplit.io)
 - [CLI](https://pypi.org/project/quicksplit/)
 
