@@ -50,40 +50,93 @@ body {
 		<div class="section">
 		<h3>Get started</h3>
 		<hr>
-		<p>Creating a split test requires registering an account with quicksplit.io</p>
-		<p>You can download the CLI to create your account.</p>
+		<p>Download the CLI (requires Python3.7+ and pip installed on your system).</p>
 <pre>
-curl -o /usr/local/bin/quicksplit https://quicksplit.io/cli
-quicksplit register
+$ pip install --user quicksplit
 </pre>
-		<p>You'll be prompted for an email address and password. We ask for an email address so that you can reset your password in case you ever lose it.</p>
-		<p>Now that your account is created, you can start creating A/B tests. We'll describe how to create a test that measures the affect of changing your product's landing page on its signup rate.</p>
-		<p>First, we'll need to create an Experiment that you'll use to associate each of your products users with.</p>
+		<p>Register a new account.</p>
+<pre>
+$ quicksplit register
+</pre>
+		<p>Create an experiment. You'll use the name of the experiment in the next steps, where you'll log exposure and conversion events to your experiment.</p>
+<pre>
+$ quicksplit create my-experiment
+</pre>
+		<p>Locate the <i><b>public, staging</b></i> token for your account. Staging tokens are used to separate staging data from production data.</p>
+<pre>
+$ export TOKEN=$(quicksplit tokens --staging --public)
+</pre>
+		<p>Create an <i>exposure</i> for your experiment by sending JSON encoded data to the service.</p>
+<pre>
+$ curl https://api.quicksplit.io/exposures \
+  -H "Authorization: ${TOKEN}" \
+  -d '{
+    "experiment": "my-experiment",
+    "subject": 12345,
+    "cohort": "control"
+   }'
+</pre>
+<p>Exposures have three required fields: experiment, subject, and cohort.
+	<ul>
+		<li>The experiment is the name of the experiment you created previously.</li>
+	 	<li>The subject is a unique identifier, typically as `user_id` provided by your own backend.</li>
+		<li>The cohort corresponds to which version of your application the user is experiencing. In an A/B test, you might use the labels "A" and "B" for your cohorts.</li>
+  </ul>
+</p>
+
+<p>Confirm that the logging was successful by checking the recent events.</p>
 
 <pre>
-export NAME="My First Experiment"
-quicksplit create --name $NAME
+$ quicksplit recent
+
+┌────────────┬─────────────────┬─────────┬─────────┬───────┬───────────────────────────────┐
+│ Type       │ Experiment      │ Subject │ Cohort  │ Value │ Last seen                     │
+├────────────┼─────────────────┼─────────┼─────────┼───────┼───────────────────────────────┤
+│ exposure   │ my-experiment   │ 12345   │ control │       │ Sun, 23 Feb 2020 23:14:02 GMT │
+└────────────┴─────────────────┴─────────┴─────────┴───────┴───────────────────────────────┘
+</pre>
+
+<p>Create a <i>conversion</i> for your experiment.</p>
+<pre>
+$ curl https://api.quicksplit.io/conversions \
+-H "Authorization: ${TOKEN}" \
+-d '{
+"experiment": "my-experiment",
+"subject": 12345
+}'
+</pre>
+
+<p>Download the results of your experiment.</p>
+
+<pre>
+$  quicksplit results my-experiment
+
+┌─────────┬──────────┬─────────────────┬────────────────────┐
+│ Cohort  │ Subjects │ Conversion rate │ 95% conf. interval │
+├─────────┼──────────┼─────────────────┼────────────────────┤
+│ control │ 1        │                 │ [,]                │
+└─────────┴──────────┴─────────────────┴────────────────────┘
 </pre>
 		</div>
 		</div>
 		</div>
 
-	<div class="row">
+	<div class="row hidden">
 	<div class="col-md-6 col-md-offset-3">
 	<div class="section">
 		<h3>Pricing</h3>
 		<hr>
-		<p>Currently, we only offer free plans. Free plans are limited to 1,000 exposures per experiment and 1 active experiment per user.</p>
+		<p>Currently, we only offer free plans. Free plans are limited to 3,000 exposures per experiment and 3 active experiment per user.</p>
 	</div>
 	</div>
 	</div>
 
-	<div class="row">
+	<div class="row hidden">
 	<div class="col-md-6 col-md-offset-3">
 	<div class="section">
 		<h3>Frequently asked questions</h3>
 		<hr>
-		<p>Is 1,000 exposures per experiment really enough? TLDR: Yes, it's probably enough.</p>
+		<p>Is 3,000 exposures per experiment really enough? TLDR: Yes, it's probably enough.</p>
 	</div>
 	</div>
 	</div>
