@@ -19,21 +19,6 @@ from cli.printers import Printer
 
 os.environ.setdefault('QUICKSPLIT_API_URL', 'http://web:5000')
 
-"""
-  config       Print configuration information used by the client
-  create       Create a new experiment
-  experiments  List active experiments
-  log          Create a new exposure or conversion event
-  X login        Log in to quicksplit.io
-  recent       Display recent exposure and conversion events
-  register     Create a new account on quicksplit.io
-  results      Print the results of an experimence
-  X start        Start a stopped experiment
-  X stop         Stop an active experiment
-  X tokens       Print the set of available tokens
-  X whoami       Print the email address of the current account
-"""
-
 
 @pytest.fixture(scope='module')
 def email():
@@ -97,6 +82,42 @@ def test_cli_handles_valid_logins(email, password):
 
 def test_cli_lists_tokens():
     cmd = 'quicksplit tokens'.split()
+    resp = subprocess.run(cmd)
+    assert resp.returncode == 0
+
+
+def test_cli_lists_single_tokens():
+    cmd = 'quicksplit tokens --private --staging'.split()
+    resp = subprocess.run(cmd)
+    assert resp.returncode == 0
+
+    cmd = 'quicksplit tokens --private --production'.split()
+    resp = subprocess.run(cmd)
+    assert resp.returncode == 0
+
+    cmd = 'quicksplit tokens --public --staging'.split()
+    resp = subprocess.run(cmd)
+    assert resp.returncode == 0
+
+    cmd = 'quicksplit tokens --public --production'.split()
+    resp = subprocess.run(cmd)
+    assert resp.returncode == 0
+
+
+def test_cli_lists_double_tokens():
+    cmd = 'quicksplit tokens --staging'.split()
+    resp = subprocess.run(cmd)
+    assert resp.returncode == 0
+
+    cmd = 'quicksplit tokens --production'.split()
+    resp = subprocess.run(cmd)
+    assert resp.returncode == 0
+
+    cmd = 'quicksplit tokens --private'.split()
+    resp = subprocess.run(cmd)
+    assert resp.returncode == 0
+
+    cmd = 'quicksplit tokens --public'.split()
     resp = subprocess.run(cmd)
     assert resp.returncode == 0
 

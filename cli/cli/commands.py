@@ -285,8 +285,12 @@ def log(ctx, log, subject, experiment, cohort, value, staging):
 
 @base.command()
 @click.option('--current', is_flag=True, default=False)
+@click.option('--public', is_flag=True, default=False)
+@click.option('--private', is_flag=True, default=False)
+@click.option('--production', is_flag=True, default=False)
+@click.option('--staging', is_flag=True, default=False)
 @click.pass_context
-def tokens(ctx, current):
+def tokens(ctx, current, public, private, production, staging):
     """
     Print the set of available tokens
     """
@@ -294,6 +298,24 @@ def tokens(ctx, current):
     if current:
         print(ctx.obj.config.token)
         return
+    if public and private:
+        print("Only one of --public or --private may be used")
+        return
+    if production and staging:
+        print("Only one of --production or --staging may be used")
     resp = ctx.obj.get('/tokens')
     if ResponseErrorHandler(resp).ok:
-        Printer(resp.json()['data'], order=['value', 'private', 'environment']).echo()
+        data = resp.json()['data']
+        if private:
+            data = list(filter(lambda x: x['private'] == True, data))
+        if public:
+            data = list(filter(lambda x: x['private'] == False, data))
+        if staging:
+            data = list(filter(lambda x: x['environment'] == 'staging', data))
+        if production:
+            data = list(filter(lambda x: x['environment'] == 'production', data))
+
+        if all([public or private, staging or production]):
+            print(data[0]['value'])
+        else:
+            Printer(data, order=['value', 'private', 'environment']).echo()
