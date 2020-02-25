@@ -39,6 +39,8 @@ def protected(call, roles=['admin']):
 
 @decorator
 def params(call, *required, **optional):
+    if not request.json:
+        raise ApiException(422, f"Missing required parameters: {list(required)}")
     json = {**optional, **request.json}
     missing_params = [param for param in required if param not in json]
     unexpected_params = [param for param in json if (param not in required and param not in optional.keys())]

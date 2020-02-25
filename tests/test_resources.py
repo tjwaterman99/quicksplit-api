@@ -30,6 +30,11 @@ def test_params_decorator(app):
         assert exc.value.status_code == 422
         assert 'notallowed' in exc.value.message
 
+    with app.test_request_context():
+        with raises(ApiException) as exc:
+            test()
+        assert exc.value.status_code == 422
+
 
 def test_root_index(client):
     resp = client.get('/')
