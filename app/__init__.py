@@ -2,6 +2,7 @@ import os
 
 from flask import Flask, current_app, json, make_response, request, g
 from flask_migrate import Migrate
+from flask_cors import CORS
 from werkzeug.utils import import_string
 
 from app.resources import api
@@ -68,6 +69,7 @@ def create_app():
 
     app = Flask(__name__)
     app.config.from_object(config)
+    CORS(app, resources={'/conversions': {'origins': '*'}, '/exposures': {'origins': '*'}})
 
     migrate = Migrate(db)
 

@@ -15,7 +15,8 @@ RUN pip install flask \
 								statsmodels \
 								researchpy \
 								terminaltables \
-								funcy==1.14
+								funcy==1.14 \
+								flask-cors==3.0.8
 
 COPY ./app /app
 COPY ./tests /tests
