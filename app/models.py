@@ -17,8 +17,8 @@ db = SQLAlchemy()
 
 class TimestampMixin(object):
 
-    created_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+    updated_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False, index=True)
 
 
 @dataclass(init=False)
@@ -327,7 +327,7 @@ class Exposure(TimestampMixin, db.Model):
     subject_id = db.Column(UUID(as_uuid=True), db.ForeignKey('subject.id'), nullable=False)
     experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), nullable=False)
     scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
-    last_seen_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
+    last_seen_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False,index=True)
 
     __table_args__ = (db.UniqueConstraint('subject_id', 'experiment_id', 'scope_id'), )
 
@@ -420,7 +420,7 @@ class Conversion(TimestampMixin, db.Model):
     exposure_id = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id'), nullable=False)
     scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
     value = db.Column(db.Float())
-    last_seen_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False)
+    last_seen_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
 
     __table_args__ = (db.UniqueConstraint('exposure_id', 'scope_id'), )
 
