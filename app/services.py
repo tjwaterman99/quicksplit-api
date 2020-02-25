@@ -64,7 +64,7 @@ class ExperimentResultCalculator(object):
     @property
     def table(self):
         cdf = self.df.reset_index()
-        cdf.columns = ['cohort', 'subjects', 'sd', 'se', 'conversion rate', 'lci', 'rci']
+        cdf.columns = ['cohort', 'subjects', 'conversion rate', 'sd', 'se', 'lci', 'rci']
         ci_df = cdf[['lci', 'rci']].round(3).fillna("").applymap(lambda x: str(x))
 
         # Create CI's in a single column

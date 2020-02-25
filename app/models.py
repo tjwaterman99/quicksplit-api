@@ -296,7 +296,10 @@ class Experiment(EventTrackerMixin, TimestampMixin, db.Model):
         db.session.flush()
 
 
+@dataclass
 class Subject(EventTrackerMixin, TimestampMixin, db.Model):
+    subject_id: str
+
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False)
     scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
@@ -307,8 +310,14 @@ class Subject(EventTrackerMixin, TimestampMixin, db.Model):
     account = db.relationship('Account', backref=db.backref('subjects', lazy='dynamic'))
     scope = db.relationship('Scope', lazy='joined')
 
+    @property
+    def subject_id(self):
+        return self.name
 
+@dataclass
 class Cohort(EventTrackerMixin, TimestampMixin, db.Model):
+    name: str
+
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), nullable=False)
     name = db.Column(db.String(length=64), nullable=False, index=True)
@@ -321,13 +330,18 @@ class Cohort(EventTrackerMixin, TimestampMixin, db.Model):
 @dataclass
 class Exposure(TimestampMixin, db.Model):
     id: str
+    cohort: Cohort
+    subject: Subject
+    experiment: Experiment
+    scope: Scope
+    last_seen_at: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     cohort_id = db.Column(UUID(as_uuid=True), db.ForeignKey('cohort.id'), nullable=False)
     subject_id = db.Column(UUID(as_uuid=True), db.ForeignKey('subject.id'), nullable=False)
     experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), nullable=False)
     scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
-    last_seen_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False,index=True)
+    last_seen_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
 
     __table_args__ = (db.UniqueConstraint('subject_id', 'experiment_id', 'scope_id'), )
 
@@ -382,8 +396,13 @@ class Exposure(TimestampMixin, db.Model):
         ).on_conflict_do_update(
             constraint="exposure_subject_id_experiment_id_scope_id_key",
             set_={'last_seen_at': func.now()}
-        ).returning(Exposure.id)
-        exposure_id = db.session.execute(exposure_insert).fetchone()
+        ).returning(Exposure.id, Exposure.last_seen_at)
+
+        # Note that the exposure_insert hasn't actually been commited yet, so
+        # the update to `last_seen_at` here will be correct, while the ORMs
+        # Exposure.query.get(exposure_id) will not produce the latest
+        # `last_seen_at` value.
+        exposure_id, last_seen_at = db.session.execute(exposure_insert).fetchone()
 
         subject = Subject.query.get(subject_id)
         cohort = Cohort.query.get(cohort_id)
@@ -394,18 +413,14 @@ class Exposure(TimestampMixin, db.Model):
             experiment.last_exposure_production = exposure
             subject.last_exposure_production = exposure
             cohort.last_exposure_production = exposure
-            if exposure.created_at != exposure.updated_at:
+            if exposure.created_at == last_seen_at:
                 experiment.subjects_counter_production = Experiment.subjects_counter_production + 1
-            else:
-                experiment.subjects_counter_production = 1
         else:
             experiment.last_exposure_staging = exposure
             subject.last_exposure_staging = exposure
             cohort.last_exposure_staging = exposure
-            if exposure.created_at != exposure.updated_at:
+            if exposure.created_at == last_seen_at:
                 experiment.subjects_counter_staging = Experiment.subjects_counter_staging + 1
-            else:
-                experiment.subjects_counter_staging = 1
 
         db.session.add_all([experiment, subject, cohort])
         db.session.flush()
@@ -415,6 +430,9 @@ class Exposure(TimestampMixin, db.Model):
 @dataclass
 class Conversion(TimestampMixin, db.Model):
     id: str
+    last_seen_at: str
+    scope: Scope
+    value: float
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     exposure_id = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id'), nullable=False)

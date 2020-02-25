@@ -121,6 +121,27 @@ def test_exposure_post(client, experiment_name, subject_name, cohort_name):
         'cohort': cohort_name
     })
     assert resp.status_code == 200
+    assert resp.json()['data']['experiment']['subjects_counter'] == 1
+
+
+def test_exposure_post_duplicate(client, experiment_name, subject_name, cohort_name):
+    resp = client.post('/exposures', data={
+        'subject': subject_name,
+        'experiment': experiment_name,
+        'cohort': cohort_name
+    })
+    assert resp.status_code == 200
+    assert resp.json()['data']['experiment']['subjects_counter'] == 1
+
+
+def test_exposure_post_non_duplicate(client, experiment_name, subject_name, cohort_name):
+    resp = client.post('/exposures', data={
+        'subject': subject_name * 2,
+        'experiment': experiment_name,
+        'cohort': cohort_name
+    })
+    assert resp.status_code == 200
+    assert resp.json()['data']['experiment']['subjects_counter'] == 2
 
 
 def test_conversion_post(client, experiment_name, subject_name):
