@@ -2,20 +2,20 @@
 
 ## Finish the CLI and backend
 
-- [ ] Build out a better CLI test suite.
-- [ ] Do the refactor (routes, etc)
-- [ ] Capture more data in the experiments (last exposure, etc)
+- [X] Build out a better CLI test suite.
+- [X] Do the refactor (routes, etc)
+- [X] Capture more data in the experiments (last exposure, etc)
 
 ## Scale Heroku
-- [ ] hobby web
-- [ ] hobby database (10M rows))
+- [X] hobby web
+- [X] hobby database (10M rows))
 
 ## Configure domains
-- [ ] api
-- [ ] www
+- [X] api
+- [X] www
 
 ## Distribute the CLI on PyPI
-- [ ] CI releases on tags
+- [X] CI releases on tags
 - [ ] Test releases against the production instance
 - [ ] Test previous releases against the production instance [all production releases should include these tests]
 
