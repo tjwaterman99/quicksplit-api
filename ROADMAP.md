@@ -20,8 +20,10 @@
 - [ ] Test previous releases against the production instance [all production releases should include these tests]
 
 ## Create a landing page
-- [ ]Install instructions
+- [ ] Install instructions
 - [ ] Basic styling (just copy Github's styles)
+- [ ] Conversion tracking for YouTube video ads (required to create a video ad campaign)
+- [ ] Basic google analytics set up
 
 ## Youtube Demo video, YT ads, start driving traffic
 - [ ] Script written
