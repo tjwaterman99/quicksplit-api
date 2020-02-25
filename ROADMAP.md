@@ -15,7 +15,7 @@
 - [X] www
 
 ## Distribute the CLI on PyPI
-- [X] CI releases on tags
+- [X] CI releases on tags (Feb 24)
 - [ ] Test releases against the production instance
 - [ ] Test previous releases against the production instance [all production releases should include these tests]
 
