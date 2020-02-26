@@ -6,7 +6,7 @@ select
     cohort.name as cohort,
     subject.name as subject,
     null::float as value,
-    exposure.updated_at
+    exposure.last_seen_at
 from exposure
 join experiment on exposure.experiment_id = experiment.id
 join cohort on cohort.id = exposure.cohort_id
@@ -14,7 +14,7 @@ join subject on exposure.subject_id = subject.id
 join scope on scope.id = exposure.scope_id
 where experiment.user_id = '{user_id}'
     and scope.name = '{scope_name}'
-order by exposure.updated_at desc
+order by exposure.last_seen_at desc
 limit 10),
 
 recent_conversions as (
@@ -24,7 +24,7 @@ select
     cohort.name as cohort,
     subject.name as subject,
     conversion.value as value,
-    conversion.updated_at
+    conversion.last_seen_at
 from exposure
 join experiment on exposure.experiment_id = experiment.id
 join cohort on cohort.id = exposure.cohort_id
@@ -33,20 +33,20 @@ join conversion on conversion.exposure_id = exposure.id
 join scope on scope.id = exposure.scope_id
     and scope.name = '{scope_name}'
 where experiment.user_id = '{user_id}'
-order by exposure.updated_at desc
+order by conversion.last_seen_at desc
 limit 10),
 
 recent_agg as (
-    select type, experiment, cohort, subject, value, updated_at
+    select type, experiment, cohort, subject, value, last_seen_at
     from recent_exposures
     union
-    select type, experiment, cohort, subject, value, updated_at
+    select type, experiment, cohort, subject, value, last_seen_at
     from recent_conversions
 )
 
 select * from
 recent_agg
-order by recent_agg.updated_at desc
+order by recent_agg.last_seen_at desc
 limit 15
 """
 

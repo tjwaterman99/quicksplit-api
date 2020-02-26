@@ -1,4 +1,5 @@
 import os
+import datetime
 
 from flask import Flask, current_app, json, make_response, request, g
 from flask_migrate import Migrate
@@ -9,6 +10,19 @@ from app.resources import api
 from app.models import db, Account, User, Token, Experiment, Subject, Exposure, Conversion, Cohort, Scope
 from app.services import ExperimentResultCalculator
 from app.exceptions import ApiException
+
+
+
+class CustomJSONEncoder(json.JSONEncoder):
+  "Add support for serializing timedeltas"
+
+  def default(self, o):
+    if type(o) == datetime.timedelta:
+      return str(o)
+    elif type(o) == datetime.datetime:
+      return o.isoformat()
+    else:
+      return super().default(o)
 
 
 def handle_api_exception(exc):
@@ -83,5 +97,7 @@ def create_app():
 
     app.register_error_handler(Exception, handle_uncaught_exception)
     app.register_error_handler(ApiException, handle_api_exception)
+
+    app.json_encoder = CustomJSONEncoder
 
     return app

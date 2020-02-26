@@ -157,8 +157,6 @@ class TokensResource(Resource):
 
 class RecentResource(Resource):
 
-    # TODO: create a `last_seen_at` field for exposure, conversions
-    # and use that over the `updated_at` field
     # TODO: we should have a service object for pulling recent events
     @protected()
     def get(self):
