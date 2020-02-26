@@ -241,8 +241,8 @@ def recent(ctx, staging):
         Printer(
             data,
             empty_data_message=f"No results received for {environment} environment yet. Please check your logging is working.",
-            order=['type', 'experiment', 'subject', 'cohort', 'value', 'updated_at'],
-            rename={'updated_at': 'last seen'}
+            order=['type', 'experiment', 'subject', 'cohort', 'value', 'last_seen_at'],
+            rename={'last_seen_at': 'last seen'}
         ).echo()
 
 
