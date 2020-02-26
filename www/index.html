@@ -35,6 +35,7 @@ body {
   background-color: #2B3137;
 	text-align: center;
   padding-bottom: 2em;
+  padding-top: 1em;
   color:#FFFFFF;
 }
 
@@ -66,13 +67,42 @@ code {
   max-height: 15em;
   max-width: 15em;
   margin-bottom: 1em;
-  margin-top: 3em;
 }
 
+.menu {
+  background-color: #2B3137;
+	text-align: center;
+  color:#FFFFFF;
+  padding-top: 1em;
+  font-size: 0.8em;
+}
+
+.menu span {
+  padding: 1em;
+}
+
+.menu span a {
+  color: #EAF5FF;
+}
+
+.anchor {
+  display: block;
+  position: relative;
+  visibility: hidden;
+}
 
 </style>
 </head>
 <body>
+  <div class="container-fluid menu">
+    <div class="row">
+      <div class="col-sm-12">
+          <span><a href="#faq">FAQ</a></span>
+          <span><a href="#contact">Contact</a></span>
+          <span><a href="#get-started">Get started</a></span>
+      </div>
+    </div>
+  </div>
 	<div class="container-fluid marquee">
 		<div class="row">
   		<div class="col-sm-12">
@@ -83,6 +113,7 @@ code {
 		</div>
   </div>
 
+  <p class="anchor" id="get-started"></p>
   <div class="container">
 		<div class="row">
 		<div class="col-12 col-lg-8 offset-lg-2">
@@ -185,7 +216,7 @@ Your test is not statistically significant. Either you need to collect more data
 </div>
 </div>
 
-
+  <p class="anchor" id="faq"></p>
 	<div class="row">
 	<div class="col-12 col-lg-8 offset-lg-2">
 	<div class="section faq">
@@ -207,6 +238,7 @@ Your test is not statistically significant. Either you need to collect more data
 	</div>
 	</div>
 
+  <p class="anchor" id="contact"></p>
   <div class="row">
     <div class="col-12 col-lg-8 offset-lg-2">
       <div class="section">
