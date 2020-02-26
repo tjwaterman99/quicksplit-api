@@ -29,40 +29,35 @@ function getToken() {
 }
 
 function runSplitTest() {
-	console.log("User: ", getUser())
-	console.log("Cohort: ", getCohort())
-	console.log("Public token: ", getToken())
 
-	$.post({
-		method: 'POST',
-		url: "https://api.quicksplit.io/exposures",
+	var user = getUser();
+	var cohort = getCohort();
+	var token = getToken();
+	var quicksplit = axios.create({
+		baseURL: "https://api.quicksplit.io",
 		headers: {
-			Authorization: getToken()
-		},
-		contentType: "application/json; charset utf-8",
-		data: JSON.stringify({
-			experiment: "demo-experiment",
-			cohort: getCohort(),
-			subject: getUser()
-		})
+			"Authorization": token,
+			"Content-Type": "application/json"
+		}
 	})
 
-	if (getCohort() == "control") {
+	// Control UI based on the user's cohort
+	if (cohort == "experimental") {
 		$('.menu').attr("hidden", true)
 	}
 
+	// Log an exposure event
+	quicksplit.post('/exposures', {
+		experiment: "demo-experiment",
+		cohort: cohort,
+		subject: user
+	})
+
+	// Log a conversion event if the user stays on the page for 30 seconds
 	setTimeout(function() {
-		$.post({
-			method: 'POST',
-			url: "https://api.quicksplit.io/conversions",
-			headers: {
-				Authorization: getToken()
-			},
-			contentType: "application/json",
-			data: JSON.stringify({
-				subject: getUser(),
-				experiment: "demo-experiment"
-			})
+		quicksplit.post('/conversions', {
+			experiment: "demo-experiment",
+			subject: user
 		})
 	}, 30 * 1000)
 }
