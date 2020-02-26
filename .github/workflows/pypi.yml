@@ -1,7 +1,7 @@
 name: PyPI Deployment
 on:
   release:
-    types: # This configuration does not affect the page_build event above
+    types:
       - created
 jobs:
   deploy-pypi:
@@ -16,9 +16,22 @@ jobs:
         run: |
           echo $RELEASE_VERSION
           echo ${{ env.RELEASE_VERSION }}
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.7'
       - name: Deploy
         id: deploy
         uses: ./.github/actions/deploy-cli
         with:
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
           TWINE_USERNAME: tjwaterman99
+      - name: Test PyPI deployed CLI against Heroku releases
+        env:
+          QUICKSPLIT_API_URL: https://api.quicksplit.io
+        run: |
+          sleep 60  # Wait for PyPI to publish release
+          pip --version
+          pip install quicksplit==$RELEASE_VERSION pytest
+          pip list
+          pytest ./tests/test_cli.py --noconftest

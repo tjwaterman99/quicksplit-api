@@ -35,6 +35,20 @@ jobs:
       - name: Test web requests against Heroku release
         run: docker-compose run --rm -e QUICKSPLIT_API_URL=https://api.quicksplit.io web pytest tests/test_api.py
         if: github.ref == 'refs/heads/master'
-      - name: Test CLI against Heroku release
+      - name: Test locally installed CLI against Heroku release
         run: docker-compose run --rm -e QUICKSPLIT_API_URL=https://api.quicksplit.io web pytest tests/test_cli.py
         if: github.ref == 'refs/heads/master'
+      - name: Set up Python 3.7
+        if: github.ref == 'refs/heads/master'
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.7'
+      - name: Test PyPI deployed CLI against Heroku releases
+        if: github.ref == 'refs/heads/master'
+        env:
+          QUICKSPLIT_API_URL: https://api.quicksplit.io
+        run: |
+          pip --version
+          pip install quicksplit pytest
+          pip list
+          pytest ./tests/test_cli.py --noconftest

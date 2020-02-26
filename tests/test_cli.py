@@ -22,7 +22,7 @@ os.environ.setdefault('QUICKSPLIT_API_URL', 'http://web:5000')
 
 @pytest.fixture(scope='module')
 def email():
-    return f"{random.random()}@gmail.com"
+    return f"{random.random()}@clitester.com"
 
 
 @pytest.fixture(scope='module')
