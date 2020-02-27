@@ -40,26 +40,25 @@ function runSplitTest() {
 			"Content-Type": "application/json"
 		}
 	})
-
-	// Control UI based on the user's cohort
+	// TODO: display navbar if user  is in "experimental" cohort
 	if (cohort == "experimental") {
-		$('.menu').attr("hidden", true)
+		$(".menu").attr("hidden",  false)
 	}
 
-	// Log an exposure event
-	quicksplit.post('/exposures', {
-		experiment: "demo-experiment",
-		cohort: cohort,
-		subject: user
+	// and log display events on every pageview
+	quicksplit.post("/exposures", {
+		"experiment": "demo-experiment",
+		"subject": user,
+		"cohort": cohort
 	})
 
-	// Log a conversion event if the user stays on the page for 30 seconds
-	setTimeout(function() {
-		quicksplit.post('/conversions', {
-			experiment: "demo-experiment",
-			subject: user
-		})
-	}, 30 * 1000)
+	 // log conversion events if the page stays open for 30 seconds
+	 setTimeout(function() {
+		 quicksplit.post("/conversions", {
+			 "experiment":  "demo-experiment",
+			 "subject": user
+		 })
+	 }, 30*1000)
 }
 
 $(document).ready(runSplitTest)
