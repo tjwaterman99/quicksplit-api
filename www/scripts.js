@@ -22,9 +22,9 @@ function getCohort() {
 
 function getToken() {
 	if (window.location.href.startsWith('https://www.quicksplit.io')) {
-		return "a79c5d0b-9d8f-4507-adbe-ab2d8dc2bfb2" // production token
+		return "8b9e8424-54d9-4f7d-8013-7dfd5240d248" // production token
 	} else {
-		return "cc625d41-9dba-4e9a-8515-a63a28581d8f" // staging token
+		return "3103b15e-1ec0-465d-8a74-1fdfdcff40dc" // staging token
 	}
 }
 
