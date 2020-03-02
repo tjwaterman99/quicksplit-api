@@ -26,4 +26,4 @@ COPY ./cli/setup.py /setup.py
 
 RUN pip install --editable .
 
-CMD gunicorn 'app:create_app()' --bind 0.0.0.0:$PORT
+CMD gunicorn 'app:create_app()' --bind 0.0.0.0:$PORT --workers 2 --threads 4
