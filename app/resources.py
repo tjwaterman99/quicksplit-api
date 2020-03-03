@@ -6,7 +6,7 @@ from funcy import decorator
 
 from app.models import (
     db, Account, User, Token, Experiment, Subject, Conversion, Exposure, Role,
-    Cohort, Scope
+    Cohort, Scope, Event
 )
 from app.services import ExperimentResultCalculator
 from app.sql import recent_events
@@ -164,6 +164,19 @@ class RecentResource(Resource):
         return [dict(r) for r in db.session.execute(re).fetchall()]
 
 
+class EventsResource(Resource):
+
+    @params("name", user_id=None, data=None)
+    def post(self, name, user_id, data):
+        event = Event(name=name, user_id=user_id, data=data)
+        db.session.add(event)
+        db.session.commit()
+        return event
+
+
+
+
+
 api.add_resource(IndexResource, '/')
 api.add_resource(UserResource, '/user')
 api.add_resource(ExperimentsResource, '/experiments')
@@ -175,3 +188,4 @@ api.add_resource(ActivateResource, '/activate')
 api.add_resource(DeactivateResource, '/deactivate')
 api.add_resource(TokensResource, '/tokens')
 api.add_resource(RecentResource, '/recent')
+api.add_resource(EventsResource, '/events')

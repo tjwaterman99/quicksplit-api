@@ -6,7 +6,7 @@ from flask import g, request, current_app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.dialects.postgresql import UUID, insert
+from sqlalchemy.dialects.postgresql import UUID, insert, JSONB
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -82,6 +82,21 @@ class EventTrackerMixin(object):
     def last_conversion_at(self):
         if self.last_conversion:
             return self.last_conversion.last_seen_at
+
+
+@dataclass
+class Event(TimestampMixin, db.Model):
+    id: str
+    name: str
+    user_id: str
+    data: dict
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = db.Column(db.String(), nullable=False, index=True)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'))
+    data = db.Column(JSONB())
+
+    user = db.relationship("User", backref=db.backref("events", lazy="dynamic"))
 
 
 @dataclass

@@ -370,3 +370,37 @@ def test_staging_recent_get(db, client, admin_staging_client, experiment):
     resp3 = client.get('/recent')
     assert resp3.status_code == 200
     assert  len(resp3.json['data']) == 0
+
+
+def test_events_resource_post(db, client, user):
+    resp = client.post('/events', json={
+        'name': "test event"
+    })
+
+    assert resp.status_code == 200
+    assert resp.json['data']['id'] is not None
+    assert resp.json['data']['name'] == 'test event'
+    assert resp.json['data']['data'] == None
+    assert resp.json['data']['user_id'] == None
+
+    resp = client.post('/events', json={
+        'name': "test event",
+        'user_id': str(user.id)
+    })
+
+    assert resp.status_code == 200
+    assert resp.json['data']['id'] is not None
+    assert resp.json['data']['name'] == 'test event'
+    assert resp.json['data']['data'] == None
+    assert resp.json['data']['user_id'] == str(user.id)
+
+    resp = client.post('/events', json={
+        'name': "test event",
+        'data': {'a': 1, 'b': 2, 'c': [4,5,6]}
+    })
+
+    assert resp.status_code == 200
+    assert resp.json['data']['id'] is not None
+    assert resp.json['data']['name'] == 'test event'
+    assert resp.json['data']['data'] == {'a': 1, 'b': 2, 'c': [4,5,6]}
+    assert resp.json['data']['user_id'] == None
