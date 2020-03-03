@@ -9,6 +9,7 @@ To test against a production api, you could run:
 Note that the order of the tests is important.
 """
 
+import datetime as dt
 import random
 import subprocess
 import os
@@ -22,7 +23,7 @@ os.environ.setdefault('QUICKSPLIT_API_URL', 'http://web:5000')
 
 @pytest.fixture(scope='module')
 def email():
-    return f"{random.random()}@clitester.com"
+    return f'tester-{dt.datetime.now().timestamp()}@quicksplit.io'
 
 
 @pytest.fixture(scope='module')
@@ -71,7 +72,7 @@ def test_cli_handles_invalid_login_password(email, password):
 
 
 def test_cli_handles_valid_logins(email, password):
-    cmd = f'quicksplit register --email {email}2 --password {password}'.split()
+    cmd = f'quicksplit register --email {"2" + email} --password {password}'.split()
     resp = subprocess.run(cmd, capture_output=True)
     assert resp.returncode == 0
     assert email + '2' in resp.stdout.decode()
