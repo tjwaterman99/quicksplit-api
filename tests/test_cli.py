@@ -75,7 +75,7 @@ def test_cli_handles_valid_logins(email, password):
     cmd = f'quicksplit register --email {"2" + email} --password {password}'.split()
     resp = subprocess.run(cmd, capture_output=True)
     assert resp.returncode == 0
-    assert email + '2' in resp.stdout.decode()
+    assert '2' + email in resp.stdout.decode()
 
     cmd = f'quicksplit login --email {email} --password {password}'.split()
     assert subprocess.run(cmd).returncode == 0
