@@ -170,7 +170,7 @@ class EventsResource(Resource):
     def post(self, name, user_id, data):
         event = Event(name=name, user_id=user_id, data=data)
         db.session.add(event)
-        db.session.commit()
+        db.session.flush()
         return event
 
 
