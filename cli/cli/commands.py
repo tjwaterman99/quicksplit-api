@@ -4,10 +4,13 @@ import os
 import sys
 import getpass
 
-
 from cli.config import Config
 from cli.client import Client, StagingClient
 from cli.printers import Printer
+
+
+config = Config()
+client = Client(config)
 
 
 class ResponseErrorHandler(object):
@@ -36,8 +39,6 @@ def base(ctx):
 
     if '.' not in sys.path:
         sys.path.append('.')
-    config = Config()
-    client = Client(config)
     ctx.obj = client
 
 
@@ -51,6 +52,7 @@ def register(ctx, email, password):
     """
 
     # ask for password again if not using the flag
+    ctx.obj.track(name="register")
     reconfirm_password = password == None
 
     email = email or input("Email: ")
@@ -76,6 +78,7 @@ def login(ctx, email, password):
     Log in to quicksplit.io
     """
 
+    ctx.obj.track(name="login")
     email = email or input("Email: ")
     password = password or getpass.getpass("Password: ")
 
@@ -91,6 +94,7 @@ def logout(ctx):
     Log out of quicksplit.io
     """
 
+    ctx.obj.track(name="logout")
     ctx.obj.config.token = None
     ctx.obj.config.dump_config()
 
@@ -102,6 +106,7 @@ def whoami(ctx):
     Print the email address of the current account
     """
 
+    ctx.obj.track(name="whoami")
     resp = ctx.obj.get('/user')
     if ResponseErrorHandler(resp).ok:
         print(resp.json()['data']['email'])
@@ -114,6 +119,7 @@ def config(ctx):
     Print configuration information used by the client
     """
 
+    ctx.obj.track(name="config")
     print(ctx.obj.config)
 
 
@@ -125,6 +131,7 @@ def create(ctx, name):
     Create a new experiment
     """
 
+    ctx.obj.track(name="create", data={'experiment': name})
     resp = ctx.obj.post('/experiments', json={'name': name})
     if ResponseErrorHandler(resp).ok:
         print(f"Successfully created new experiment {name}")
@@ -138,6 +145,7 @@ def experiments(ctx, staging):
     List active experiments
     """
 
+    ctx.obj.track(name="experiments")
     if staging:
         with StagingClient(ctx.obj) as client:
             resp = client.get('/experiments')
@@ -163,10 +171,10 @@ def start(ctx, experiment):
     Start a stopped experiment
     """
 
+    ctx.obj.track(name="start", data={'experiment': experiment})
     resp = ctx.obj.post('/activate', json={'experiment': experiment})
     if ResponseErrorHandler(resp).ok:
         print(f"Started experiment {resp.json()['data']['name']}")
-
 
 
 @base.command()
@@ -177,6 +185,7 @@ def stop(ctx, experiment):
     Stop an active experiment
     """
 
+    ctx.obj.track(name="stop", data={'experiment': experiment})
     resp = ctx.obj.post('/deactivate', json={'experiment': experiment})
     if ResponseErrorHandler(resp).ok:
         print(f"Stopped experiment {resp.json()['data']['name']}")
@@ -191,6 +200,10 @@ def results(ctx, experiment, staging):
     Print the results of an experimence
     """
 
+    ctx.obj.track(name="results", data={
+        'experiment':  experiment,
+        'staging':  staging
+    })
     if staging:
         environment = "staging"
         with StagingClient(ctx.obj) as client:
@@ -229,6 +242,7 @@ def recent(ctx, staging):
     Display recent exposure and conversion events
     """
 
+    ctx.obj.track(name="recent")
     if staging:
         environment = "staging"
         with StagingClient(ctx.obj) as client:
@@ -295,6 +309,7 @@ def tokens(ctx, current, public, private, production, staging):
     Print the set of available tokens
     """
 
+    ctx.obj.track(name="tokens")
     if current:
         print(ctx.obj.config.token)
         return

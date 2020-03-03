@@ -1,4 +1,16 @@
 import requests
+import threading
+
+
+class Logger(threading.Thread):
+    def __init__(self, client, **kwargs):
+        self.client = client
+        self.kwargs = kwargs
+        self.kwargs.update(user_id=self.client.config.user.get('id'))
+        super().__init__()
+
+    def run(self):
+        return self.client.send('post', '/events', json=self.kwargs)
 
 
 class Client(object):
@@ -12,6 +24,9 @@ class Client(object):
         if self.config.token:
             headers.update({'Authorization': self.config.token})
         return requests.request(method, url=_route, json=json, headers=headers)
+
+    def track(self, **kwargs):
+        return Logger(client=self, **kwargs).start()
 
     def login(self, email, password):
         resp = self.post('/login', json={
