@@ -21,12 +21,12 @@ export default {
 
 <style lang="scss">
 
-@import "../assets/scss/styles.scss";
+@import "../assets/scss/variables.scss";
 
 .menu {
 	background-color: $gray-800;
 	text-align: center;
-  color:#FFFFFF;
+  color: #FFFFFF;
   padding-top: 1em;
   font-size: 0.8em;
 }
