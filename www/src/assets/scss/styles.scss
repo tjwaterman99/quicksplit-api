@@ -1,0 +1,83 @@
+// Variable over rides before importing bootstrap
+$theme-colors: (
+  "primary": blue,
+  "danger": #081321,
+  "success": #081321,
+  "light": #081321,
+  "dark": #081321,
+  "info": #233D4D
+);
+
+@import "node_modules/bootstrap/scss/bootstrap";
+
+
+html, body {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+body {
+   background-color: #FFFFFF;
+   color: #252A2E;
+   font-family: "-apple-system", "BlinkMacSystemFont", "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+   font-size: 1.25em;
+}
+
+.marquee {
+  background-color: #2B3137;
+   text-align: center;
+  padding-bottom: 2em;
+  padding-top: 1em;
+  color:#FFFFFF;
+}
+
+.section {
+   margin-top: 50px;
+}
+
+.section pre {
+  border-radius: 5px;
+  background-color: #F6F8FA;
+  color: #252A2E;
+   font-size: 0.8em;
+   padding: 0.5em;
+  padding-top: 0.75em;
+  padding-bottom: 0.75em;
+   margin-bottom: 1.0em;
+  font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", "monospace"
+}
+
+code {
+  background-color: #F6F8FA;
+  color: #252A2E;
+   font-size: 0.8em;
+  padding: 0.2em;
+  border-radius: 5px;
+}
+
+.logo {
+  max-height: 15em;
+  max-width: 15em;
+  margin-bottom: 1em;
+}
+
+.menu {
+  background-color: #2B3137;
+   text-align: center;
+  color:#FFFFFF;
+  padding-top: 1em;
+  font-size: 0.8em;
+}
+.menu span {
+  padding: 1em;
+}
+
+.menu span a {
+  color: #EAF5FF;
+}
+
+.anchor {
+  display: block;
+  position: relative;
+  visibility: hidden;
+}
