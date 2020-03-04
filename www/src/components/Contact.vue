@@ -1,8 +1,8 @@
 <template>
-	<div class="contact">
+	<div class="container contact">
 		<p class="anchor" id="contact"></p>
 			<div class="row">
-			<div class="col-12 col-lg-8 offset-lg-2">
+			<div class="col-lg-10 offset-lg-2">
 			<div class="section">
 			<h2 class="text-center">Contact</h2>
 			<br>

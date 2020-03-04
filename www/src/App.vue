@@ -2,12 +2,9 @@
   <div id="app">
     <NavBar />
     <Marquee />
-
-  <div class="container">
     <GetStarted />
     <FaqList />
     <Contact />
-  </div>
 </div>
 </template>
 

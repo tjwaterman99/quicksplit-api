@@ -1,8 +1,7 @@
 <template>
-
-
+	<div class="container">
 	<div class="row">
-		<p class="anchor" id="get-started"></p>
+	<p class="anchor" id="get-started"></p>
 	<div class="col-12 col-lg-8 offset-lg-2">
 	<div class="section">
 	<h3>Register an account</h3>
@@ -99,6 +98,7 @@
 
 	<p>Note that we're using the <code>--staging</code> flag here again because we've been using the staging token.</p>
 
+	</div>
 	</div>
 	</div>
 	</div>

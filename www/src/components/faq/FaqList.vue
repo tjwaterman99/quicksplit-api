@@ -1,8 +1,9 @@
 <template>
 
+	<div class="container">
 	<div class="row faq-list">
 	<p class="anchor" id="faq"></p>
-	<div class="col-12 col-lg-8 offset-lg-2">
+	<div class="col-lg-10 offset-lg-2">
 	<div class="section faq">
 	<h2 class="text-center">Frequently asked questions</h2>
 	<br>
@@ -18,6 +19,7 @@
 	<p class="faq-question"><b>Q: How do you calculate whether my experiment is statistically significant?</b></p>
 	<p>We use the industry-standard methodology called an <b><a href="https://en.wikipedia.org/wiki/Analysis_of_variance">ANOVA</a></b> test. If the F-statistic of the ANOVA test has an associated p-value of less than 0.1, we conclude that the test is significant.<p>
 	<hr>
+	</div>
 	</div>
 	</div>
 	</div>
