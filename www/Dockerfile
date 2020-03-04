@@ -1,4 +1,4 @@
-FROM node:12-slim
+FROM node:10-slim
 
 RUN npm install -g @vue/cli @vue/cli-service-global
 
