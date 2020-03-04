@@ -1,14 +1,33 @@
 // Variable over rides before importing bootstrap
-$theme-colors: (
-  "primary": blue,
-  "danger": #081321,
-  "success": #081321,
-  "light": #081321,
-  "dark": #081321,
-  "info": #233D4D
-);
+$body-bg: #000;
+$body-color: #111;
 
-@import "node_modules/bootstrap/scss/bootstrap";
+$white:    #fff !default;
+$gray-100: #f8f9fa !default;
+$gray-200: #e9ecef !default;
+$gray-300: #dee2e6 !default;
+$gray-400: #ced4da !default;
+$gray-500: #adb5bd !default;
+$gray-600: #6c757d !default;
+$gray-700: #495057 !default;
+$gray-800: #343a40 !default;
+$gray-900: #212529 !default;
+$black:    #000 !default;
+
+$blue:    #007bff !default;
+$indigo:  #6610f2 !default;
+$purple:  #6f42c1 !default;
+$pink:    #e83e8c !default;
+$red:     #dc3545 !default;
+$orange:  #fd7e14 !default;
+$yellow:  #ffc107 !default;
+$green:   #28a745 !default;
+$teal:    #20c997 !default;
+$cyan:    #17a2b8 !default;
+
+
+@import 'node_modules/bootstrap/scss/bootstrap';
+@import 'node_modules/bootstrap-vue/src/index.scss';
 
 
 html, body {
@@ -17,15 +36,15 @@ html, body {
 }
 
 body {
-   background-color: #FFFFFF;
+   background-color: $white;
    color: #252A2E;
    font-family: "-apple-system", "BlinkMacSystemFont", "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
    font-size: 1.25em;
 }
 
 .marquee {
-  background-color: #2B3137;
-   text-align: center;
+  background-color: $gray-800;
+  text-align: center;
   padding-bottom: 2em;
   padding-top: 1em;
   color:#FFFFFF;
@@ -59,21 +78,6 @@ code {
   max-height: 15em;
   max-width: 15em;
   margin-bottom: 1em;
-}
-
-.menu {
-  background-color: #2B3137;
-   text-align: center;
-  color:#FFFFFF;
-  padding-top: 1em;
-  font-size: 0.8em;
-}
-.menu span {
-  padding: 1em;
-}
-
-.menu span a {
-  color: #EAF5FF;
 }
 
 .anchor {
