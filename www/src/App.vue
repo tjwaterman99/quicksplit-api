@@ -1,20 +1,12 @@
 <template>
   <div id="app">
     <NavBar />
-  <div class="container-fluid marquee">
-      <div class="row">
-        <div class="col-sm-12">
-          <svg class="logo" version="1.1" viewBox="0.0 0.0 960.0 540.0" fill="none" stroke="none" stroke-linecap="square" stroke-miterlimit="10" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg"><clipPath id="p.0"><path d="m0 0l960.0 0l0 540.0l-960.0 0l0 -540.0z" clip-rule="nonzero"/></clipPath><g clip-path="url(#p.0)"><path fill="#000000" fill-opacity="0.0" d="m0 0l960.0 0l0 540.0l-960.0 0z" fill-rule="evenodd"/><path fill="#ee6c4d" d="m502.10464 163.49783l0 0c63.319427 -13.119553 127.910126 15.873795 160.18906 71.90541c32.27899 56.0316 24.958923 126.451675 -18.154236 174.64638c-43.11316 48.19467 -112.28613 63.283478 -171.55347 37.421173c-59.267334 -25.862274 -95.24872 -86.836914 -89.236206 -151.2211l83.31314 7.780182l0 0c-2.6539001 28.419159 13.2282715 55.333374 39.388885 66.74899c26.160583 11.415619 56.693542 4.755432 75.723694 -16.5177c19.030151 -21.273163 22.26123 -52.356567 8.013306 -77.08893c-14.247986 -24.732346 -42.7583 -37.530014 -70.70746 -31.739044z" fill-rule="evenodd"/><path fill="#ee6c4d" d="m335.0532 80.60887l0 0c62.260406 -38.937515 143.56699 -27.00142 192.00925 28.187645c48.44232 55.189064 49.735596 137.35693 3.0541992 194.04321c-46.681366 56.68631 -127.57202 71.175354 -191.02701 34.216583c-63.454987 -36.9588 -90.762695 -114.46698 -64.4884 -183.0392l73.409454 28.127731c-12.485565 32.585526 0.49105835 69.41742 30.644867 86.980225c30.15384 17.562805 68.59305 10.677612 90.77606 -16.259705c22.182983 -26.937332 21.56842 -65.983505 -1.451355 -92.209335c-23.019775 -26.225845 -61.656677 -31.897888 -91.2428 -13.394775z" fill-rule="evenodd"/></g></svg>
-          <h1>Quick Split</h1>
-          <h2>The developer tool for fast A/B tests</h2>
-        </div>
-      </div>
-    </div>
+    <Marquee />
 
   <div class="container">
-  <GetStarted />
-  <FaqList />
-  <Contact />
+    <GetStarted />
+    <FaqList />
+    <Contact />
   </div>
 </div>
 </template>
@@ -24,6 +16,7 @@ import Contact from './components/Contact'
 import FaqList from './components/faq/FaqList'
 import GetStarted from './components/guides/GetStarted'
 import NavBar from './components/NavBar'
+import Marquee from './components/Marquee'
 
 export default {
   name: 'App',
@@ -31,7 +24,8 @@ export default {
     'Contact': Contact,
     'FaqList': FaqList,
     'GetStarted': GetStarted,
-    'NavBar': NavBar
+    'NavBar': NavBar,
+    'Marquee': Marquee
   }
 }
 </script>
