@@ -3,7 +3,7 @@
 	<div class="container">
 	<div class="row faq-list">
 	<p class="anchor" id="faq"></p>
-	<div class="col-lg-10 offset-lg-2">
+	<div class="col-lg-8 offset-lg-2">
 	<div class="section faq">
 	<h2 class="text-center">Frequently asked questions</h2>
 	<br>
