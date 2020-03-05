@@ -15,14 +15,6 @@ body {
    font-size: 1.25em;
 }
 
-.marquee {
-  background-color: $gray-800;
-  text-align: center;
-  padding-bottom: 2em;
-  padding-top: 1em;
-  color:#FFFFFF;
-}
-
 .section {
    margin-top: 50px;
 }
@@ -31,26 +23,20 @@ body {
   border-radius: 5px;
   background-color: #F6F8FA;
   color: #252A2E;
-   font-size: 0.8em;
-   padding: 0.5em;
+  font-size: 0.8em;
+  padding: 0.5em;
   padding-top: 0.75em;
   padding-bottom: 0.75em;
-   margin-bottom: 1.0em;
+  margin-bottom: 1.0em;
   font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", "monospace"
 }
 
 code {
   background-color: #F6F8FA;
   color: #252A2E;
-   font-size: 0.8em;
+  font-size: 0.8em;
   padding: 0.2em;
   border-radius: 5px;
-}
-
-.logo {
-  max-height: 15em;
-  max-width: 15em;
-  margin-bottom: 1em;
 }
 
 .anchor {

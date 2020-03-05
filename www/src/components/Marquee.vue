@@ -17,5 +17,21 @@ export default {
 }
 </script>
 
-<style>
+<style lang="scss">
+
+@import "../assets/scss/variables.scss";
+
+.marquee {
+  background-color: $gray-800;
+  text-align: center;
+  padding-bottom: 2em;
+  padding-top: 1em;
+  color: #FFFFFF;
+}
+
+.logo {
+  max-height: 15em;
+  max-width: 15em;
+  margin-bottom: 1em;
+}
 </style>
