@@ -19,5 +19,22 @@ export default {
 }
 </script>
 
-<style>
+<style lang="scss">
+
+@import "../assets/scss/variables.scss";
+
+.menu {
+	background-color: $gray-800;
+	text-align: center;
+  color: #FFFFFF;
+  padding-top: 1em;
+  font-size: 0.8em;
+}
+.menu span {
+  padding: 1em;
+}
+
+.menu span a {
+  color: #EAF5FF;
+}
 </style>
