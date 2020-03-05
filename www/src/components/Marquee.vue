@@ -2,7 +2,7 @@
 	<div class="container-fluid marquee">
 		<div class="row">
 			<div class="col-sm-12">
-				<img class="logo" src="/logo.png"></img>
+				<img class="logo" src="/logo.png" />
 				<h1>Quick Split</h1>
 				<h2>The developer tool for fast A/B tests</h2>
 			</div>
@@ -30,8 +30,9 @@ export default {
 }
 
 .logo {
-  max-height: 15em;
-  max-width: 15em;
-  margin-bottom: 1em;
+  max-height: 7em;
+  max-width: 7em;
+  margin-bottom: 1.5em;
+	margin-top: 1.5em;
 }
 </style>
