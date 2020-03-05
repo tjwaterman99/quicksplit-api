@@ -1,0 +1,46 @@
+// Variable over rides before importing bootstrap styles
+@import './variables.scss';
+@import 'node_modules/bootstrap/scss/bootstrap';
+
+
+html, body {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+body {
+   background-color: $white;
+   color: #252A2E;
+   font-family: "-apple-system", "BlinkMacSystemFont", "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+   font-size: 1.25em;
+}
+
+.section {
+   margin-top: 50px;
+}
+
+.section pre {
+  border-radius: 5px;
+  background-color: #F6F8FA;
+  color: #252A2E;
+  font-size: 0.8em;
+  padding: 0.5em;
+  padding-top: 0.75em;
+  padding-bottom: 0.75em;
+  margin-bottom: 1.0em;
+  font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", "monospace"
+}
+
+code {
+  background-color: #F6F8FA;
+  color: #252A2E;
+  font-size: 0.8em;
+  padding: 0.2em;
+  border-radius: 5px;
+}
+
+.anchor {
+  display: block;
+  position: relative;
+  visibility: hidden;
+}
