@@ -15,11 +15,7 @@ body {
    font-size: 1.25em;
 }
 
-.section {
-   margin-top: 50px;
-}
-
-.section pre {
+pre {
   border-radius: 5px;
   background-color: #F6F8FA;
   color: #252A2E;
@@ -37,10 +33,4 @@ code {
   font-size: 0.8em;
   padding: 0.2em;
   border-radius: 5px;
-}
-
-.anchor {
-  display: block;
-  position: relative;
-  visibility: hidden;
 }

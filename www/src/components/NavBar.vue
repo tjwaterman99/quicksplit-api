@@ -1,15 +1,28 @@
 <template>
-	<div class="container-fluid menu">
-		<div class="row">
-			<div class="container">
-				<div class="col">
-					<span><a href="#faq">FAQ</a></span>
-					<span><a href="#contact">Contact</a></span>
-					<span><a href="#get-started">Get started</a></span>
-				</div>
-			</div>
+	<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+		<a class="navbar-brand" href="/">
+			<img src="/logo.png" width="30" height="30" class="d-inline-block align-top" alt="" />
+			Quick Split
+		</a>
+
+		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+		<span class="navbar-toggler-icon"></span>
+		</button>
+
+		<div class="collapse navbar-collapse" id="navbarSupportedContent">
+		<ul class="navbar-nav ml-auto">
+		<li class="nav-item">
+		<a class="nav-link" href="/faq">FAQ</a>
+		</li>
+		<li class="nav-item">
+		<a class="nav-link" href="/get-started">Get Started</a>
+		</li>
+		<li class="nav-item">
+		<a class="nav-link" href="/contact">Contact</a>
+		</li>
+		</ul>
 		</div>
-	</div>
+	</nav>
 </template>
 
 <script>
@@ -21,7 +34,7 @@ export default {
 
 <style lang="scss">
 
-@import "../assets/scss/variables.scss";
+@import "src/assets/scss/variables.scss";
 
 .menu {
 	background-color: $gray-800;

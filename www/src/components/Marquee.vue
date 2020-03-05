@@ -1,10 +1,9 @@
 <template>
 	<div class="container-fluid marquee">
 		<div class="row">
-			<div class="col-sm-12">
-				<img class="logo" src="/logo.png" />
-				<h1>Quick Split</h1>
-				<h2>The developer tool for fast A/B tests</h2>
+			<div class="col-sm-12 col-md-5 offset-md-1 text-center text-md-left">
+				<h1>Drive your product</h1>
+				<p class="sub-header">Quick Split is the fastest, easiest way to run A/B tests on any of your products. You can A/B test a new feature in as little as 3 lines of code, without needing a data scientist.</p>
 			</div>
 		</div>
 	</div>
@@ -19,14 +18,23 @@ export default {
 
 <style lang="scss">
 
-@import "../assets/scss/variables.scss";
+@import "src/assets/scss/variables.scss";
 
 .marquee {
   background-color: $gray-800;
-  text-align: center;
-  padding-bottom: 2em;
-  padding-top: 1em;
+  padding-bottom: 3em;
+  padding-top: 5em;
   color: #FFFFFF;
+
+	h1 {
+		font-size: 3em;
+	}
+
+	p {
+		margin-top: 2em;
+		font-size: 1.25em;
+		color: $gray-500;
+	}
 }
 
 .logo {

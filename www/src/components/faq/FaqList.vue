@@ -2,10 +2,7 @@
 
 	<div class="container">
 	<div class="row faq-list">
-	<p class="anchor" id="faq"></p>
 	<div class="col-lg-8 offset-lg-2">
-	<div class="section faq">
-	<h2 class="text-center">Frequently asked questions</h2>
 	<br>
 	<p class="faq-question"><b>Q: What sample sizes can I use for a single experiment?</b></p>
 	<p>You can log up to <b>3,000 subjects</b> in a single experiment. In typical situations, that's a large enough sample size to detect ~1% differences in conversion rates.<p>
@@ -22,7 +19,6 @@
 	</div>
 	</div>
 	</div>
-	</div>
 </template>
 
 <script>
@@ -33,5 +29,9 @@ export default {
 
 </script>
 
-<style>
+<style scoped=true lang="scss">
+
+h2 {
+	margin-top: 2em;
+}
 </style>
