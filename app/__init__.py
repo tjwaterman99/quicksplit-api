@@ -44,6 +44,7 @@ def handle_uncaught_exception(exc):
 
 
 def load_user():
+    current_app.logger.error("Logging in user")
     token_value = request.headers.get('Authorization')
     if not token_value:
         g.user = None
@@ -84,7 +85,11 @@ def create_app():
 
     app = Flask(__name__)
     app.config.from_object(config)
-    CORS(app, resources={'/conversions': {'origins': '*'}, '/exposures': {'origins': '*'}})
+    CORS(app, resources={
+        '/conversions': {'origins': '*'},
+        '/exposures': {'origins': '*'},
+        '/*': {'origins': ['http://127.0.0.1:8080', 'https://www.quicksplit.io']}
+    })
 
     migrate = Migrate(db)
 

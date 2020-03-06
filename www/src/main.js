@@ -9,16 +9,15 @@ import Home from './components/pages/Home';
 import GetStarted from './components/pages/GetStarted';
 import Contact from './components/pages/Contact';
 import Error404 from './components/pages/Error404';
-
-
-Vue.use(VueRouter)
-Vue.config.productionTip = false
+import Login from './components/pages/Login';
+import Client from './client';
 
 const routes = [
   { path: '/faq', component: Faq },
   { path: '/',  component: Home },
   { path: '/get-started', component: GetStarted },
   { path: '/contact', component: Contact },
+  { path: '/login', component: Login},
 
   { path: '/*', component: Error404 },
 ]
@@ -27,6 +26,12 @@ const router = new VueRouter({
   routes: routes,
   mode: 'history'
 })
+
+Vue.use(VueRouter)
+Vue.config.productionTip = false
+var api = new Client(process.env.VUE_APP_API_URL)
+Vue.observable(api)
+Vue.prototype.$api = api
 
 new Vue({
   router,

@@ -10,16 +10,28 @@
 		</button>
 
 		<div class="collapse navbar-collapse" id="navbarSupportedContent">
-		<ul class="navbar-nav ml-auto">
+		<ul class="navbar-nav mr-auto">
 		<li class="nav-item">
-		<a class="nav-link" href="/faq">FAQ</a>
+		<router-link class="nav-link" to="/faq">FAQ</router-link>
 		</li>
 		<li class="nav-item">
-		<a class="nav-link" href="/get-started">Get Started</a>
+		<router-link class="nav-link" to="/get-started">Get Started</router-link>
 		</li>
 		<li class="nav-item">
-		<a class="nav-link" href="/contact">Contact</a>
+		<router-link class="nav-link" to="/contact">Contact</router-link>
 		</li>
+		</ul>
+
+		<ul class="navbar-nav ml-auto" v-if="loggedOut">
+		<li class="nav-item">
+			<router-link class="nav-link" to="/login">Log In</router-link>
+		</li>
+		</ul>
+
+		<ul class="navbar-nav ml-auto" v-else>
+			<li class="nav-item">
+				<a class="nav-link" href="/" @click="logOut">Log out</a>
+			</li>
 		</ul>
 		</div>
 	</nav>
@@ -28,7 +40,19 @@
 <script>
 export default {
 	name: "NavBar",
-	props: {}
+	computed: {
+		loggedOut: function() {
+			return this.$api.user == null
+		},
+		api: function() {
+			return this.$api
+		}
+	},
+	methods: {
+		logOut: function() {
+			return this.$api.logout()
+		}
+	}
 }
 </script>
 
