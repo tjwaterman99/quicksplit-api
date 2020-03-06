@@ -34,7 +34,7 @@ def handle_api_exception(exc):
 def handle_uncaught_exception(exc):
     if not current_app.testing:
         db.session.rollback()
-    current_app.logger.error(exc)
+    current_app.logger.error("Unhandled error: " + exc)
     resp = {
         'data': None,
         'message': "Unexpected exception occured. Please try again later.",
@@ -44,7 +44,6 @@ def handle_uncaught_exception(exc):
 
 
 def load_user():
-    current_app.logger.error("Logging in user")
     token_value = request.headers.get('Authorization')
     if not token_value:
         g.user = None
