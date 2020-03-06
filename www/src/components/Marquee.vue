@@ -5,14 +5,21 @@
 				<h1>Drive your product</h1>
 				<p class="sub-header">Quick Split is the fastest, easiest way to run A/B tests on any of your products. You can A/B test a new feature in as little as 3 lines of code, without needing a data scientist.</p>
 			</div>
+			<div class="col-sm-12 col-md-4 offset-md-1">
+				<RegisterForm />
+			</div>
 		</div>
 	</div>
 </template>
 
 <script>
+import RegisterForm from './RegisterForm';
+
 export default {
 	name: "Marquee",
-	props: {}
+	components: {
+		'RegisterForm': RegisterForm
+	}
 }
 </script>
 

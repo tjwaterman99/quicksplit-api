@@ -34,7 +34,7 @@ def handle_api_exception(exc):
 def handle_uncaught_exception(exc):
     if not current_app.testing:
         db.session.rollback()
-    current_app.logger.error("Unhandled error: " + exc)
+    current_app.logger.error("Unhandled error: " + str(exc))
     resp = {
         'data': None,
         'message': "Unexpected exception occured. Please try again later.",

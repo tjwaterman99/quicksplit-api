@@ -49,7 +49,7 @@ export default {
 	name: "Home",
 	components: {
 		'Marquee': Marquee,
-		'Card': Card
+		'Card': Card,
 	}
 }
 </script>

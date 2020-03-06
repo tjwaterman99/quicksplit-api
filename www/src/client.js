@@ -48,6 +48,23 @@ class Client {
 		})
 	}
 
+	async register({email, password}) {
+		var request = this.axios.post('/user', {
+			'email': email,
+			'password': password
+		})
+
+		var self = this
+
+		return request.then(resp => {
+			self.token = resp.data.data.admin_token.value
+			self.user = resp.data.data
+			Cookies.set(self.tokenKey, self.token)
+			self.setAuthorizationHeader()
+			return resp
+		})
+	}
+
 	logout() {
 		Cookies.remove(this.tokenKey);
 		this.removeAuthorizationHeader()

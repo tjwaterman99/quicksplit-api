@@ -23,12 +23,15 @@
 		</ul>
 
 		<ul class="navbar-nav ml-auto" v-if="loggedOut">
-		<li class="nav-item">
-			<router-link class="nav-link" to="/login">Log In</router-link>
-		</li>
+			<li class="nav-item">
+				<router-link class="nav-link" to="/login">Log In</router-link>
+			</li>
 		</ul>
 
 		<ul class="navbar-nav ml-auto" v-else>
+			<li class="nav-item">
+				<a class="nav-link disabled">{{ this.$api.user.email }}</a>
+			</li>
 			<li class="nav-item">
 				<a class="nav-link" href="/" @click="logOut">Log out</a>
 			</li>
