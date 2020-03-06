@@ -10,7 +10,7 @@ from app.resources import api
 from app.models import db, Account, User, Token, Experiment, Subject, Exposure, Conversion, Cohort, Scope
 from app.services import ExperimentResultCalculator
 from app.exceptions import ApiException
-
+from app.commands import seed
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -107,6 +107,8 @@ def create_app():
 
     app.register_error_handler(Exception, handle_uncaught_exception)
     app.register_error_handler(ApiException, handle_api_exception)
+
+    app.cli.add_command(seed)
 
     app.json_encoder = CustomJSONEncoder
 

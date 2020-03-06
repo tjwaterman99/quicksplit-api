@@ -14,7 +14,7 @@ jobs:
       - name: Log container status
         run: docker-compose ps
       - name: Seed local containers
-        run: docker-compose exec -T web flask db upgrade
+        run: docker-compose exec -T web flask seed all
       - name: Test containers
         run: docker-compose exec -T web pytest tests/ -v
       - name: Install Heroku
