@@ -53,7 +53,6 @@ export default {
 				self.resp = resp
 				setTimeout(function() {self.$router.push('/')}, 1000)
 			}).catch(err => {
-				console.log(err)
 				self.error = err.response.data.message
 			})
 		}
