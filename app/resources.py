@@ -39,9 +39,7 @@ def protected(call, roles=['admin']):
 
 @decorator
 def params(call, *required, **optional):
-    current_app.logger.error("In params...")
     if not request.json:
-        current_app.logger.error("No json in request...")
         raise ApiException(422, f"Missing required parameters: {list(required)}")
     json = {**optional, **request.json}
     missing_params = [param for param in required if param not in json]
@@ -50,7 +48,6 @@ def params(call, *required, **optional):
         raise ApiException(422, f"Missing required parameters: {missing_params}")
     if any(unexpected_params):
         raise ApiException(422, f"Received invalid parameters: {unexpected_params}")
-    current_app.logger.error("Validated params...")
     return call._func(*call._args, **json)
 
 
