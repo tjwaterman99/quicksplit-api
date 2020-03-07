@@ -144,6 +144,11 @@ class Account(TimestampMixin, db.Model):
         account = cls(plan=plan)
         return account
 
+    def change_plan(self, plan):
+        self.plan = plan
+        db.session.add(self)
+        db.session.flush()
+
 
 @dataclass
 class Role(TimestampMixin, db.Model):

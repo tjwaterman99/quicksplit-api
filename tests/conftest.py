@@ -75,6 +75,16 @@ def user(db, email, production_scope):
 
 
 @pytest.fixture()
+def free_plan(db):
+    return Plan.query.filter(Plan.price_in_cents==0).first()
+
+
+@pytest.fixture()
+def paid_plan(db):
+    return Plan.query.filter(Plan.price_in_cents > 0).first()
+
+
+@pytest.fixture()
 def experiment(db, user):
     experiment = Experiment(user=user, name="Test Experiment", active=True, last_activated_at=dt.datetime.now())
     db.session.add(experiment)
