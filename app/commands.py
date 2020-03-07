@@ -2,7 +2,7 @@ from flask.cli import AppGroup
 from click import argument, option
 
 from app.models import db
-from app.seeds import plans, roles, scopes
+from app.seeds import plans, roles, scopes, plan_schedules
 from migrations import data_migrations
 
 seed = AppGroup(name="seed", help="Commands to seed the database")
@@ -10,6 +10,7 @@ seed = AppGroup(name="seed", help="Commands to seed the database")
 
 @seed.command()
 def all():
+    db.session.add_all(plan_schedules)
     db.session.add_all(plans)
     db.session.add_all(roles)
     db.session.add_all(scopes)
