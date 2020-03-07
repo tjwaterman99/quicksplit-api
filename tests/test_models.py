@@ -218,3 +218,7 @@ def test_conversion_create_staging(db, app, user, experiment, subject_staging, e
         assert conversion_duplicate.last_seen_at == experiment.last_conversion_at
         assert conversion_duplicate.last_seen_at == conversion.exposure.cohort.last_conversion_at
         assert conversion_duplicate.last_seen_at == subject.last_conversion_at
+
+
+def test_free_plan_has_no_schedule(user):
+    assert user.account.plan.schedule == None

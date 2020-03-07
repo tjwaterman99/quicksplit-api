@@ -11,7 +11,7 @@ from app.models import (
     db as _db, Role, Plan, Account, User, Subject, Experiment, Exposure,
     Conversion, Token, Cohort, Scope
 )
-from app.seeds import plans, roles, scopes
+from app.seeds import plans, roles, scopes, plan_schedules
 
 
 os.environ.setdefault('QUICKSPLIT_API_URL', 'http://web:5000')
@@ -37,6 +37,7 @@ def database(app):
     with app.app_context():
         _db.drop_all()
         _db.create_all()
+        _db.session.add_all(plan_schedules)
         _db.session.add_all(plans)
         _db.session.add_all(roles)
         _db.session.add_all(scopes)

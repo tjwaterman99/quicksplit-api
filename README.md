@@ -17,10 +17,31 @@ Start the docker services.
 docker-compose up --detach
 ```
 
-Seed the database.
+Migrate and seed the database.
 
 ```
 docker-compose exec web flask db upgrade
+docker-compose exec web flask seed all
+```
+
+If you're upgrading the database from a specific version, you may need to run specific seeding commands, as the `flask seed all` command assumes the database has no existing data.
+
+To upgrade a specific version, locate the current revision of the database.
+
+```
+docker-compose exec web flask db current
+```
+
+Then, pass that version to the command `flask seed revision` command.
+
+```
+docker-compose exec web flask seed $REVISION --up
+```
+
+You should also be able to remove the data for the revision by using `--down`.
+
+```
+docker-compose exec web flask seed $REVISION --down
 ```
 
 You can create a test user with the CLI that gets installed in the web container.
@@ -38,3 +59,15 @@ Run the tests from inside a docker container.
 ```
 docker-compose exec web pytest tests
 ```
+
+## Deploying
+
+Pushes to master will automatically deploy the `www` build to Netlify and the `api` to Heroku. The Heroku deploy will also automatically run the schema migrations, but will not automatically run any data migrations.
+
+Use the `flask db seed` command to run a specific data migration.
+
+```
+heroku run flask db seed $REVISION
+```
+
+Note that it can be dangerous to run multiple schema migrations (ie pushes to master) if the later schema migrations assume that a data migration has occurred.

@@ -6,7 +6,7 @@ from flask import g, request, current_app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.dialects.postgresql import UUID, insert, JSONB
+from sqlalchemy.dialects.postgresql import UUID, insert, JSONB, INTERVAL
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -100,6 +100,18 @@ class Event(TimestampMixin, db.Model):
 
 
 @dataclass
+class PlanSchedule(TimestampMixin, db.Model):
+    name: str
+    interval: dt.timedelta
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = db.Column(db.String(), nullable=False, index=True, unique=True)
+    interval = db.Column(INTERVAL, nullable=False, index=True, unique=True)
+
+    __tablename__ = "plan_schedule"
+
+
+@dataclass
 class Plan(TimestampMixin, db.Model):
     id: str
     name: str
@@ -112,6 +124,9 @@ class Plan(TimestampMixin, db.Model):
     price_in_cents = db.Column(db.Integer(), nullable=False)
     max_subjects_per_experiment = db.Column(db.Integer(), nullable=False)
     max_active_experiments = db.Column(db.Integer(), nullable=False)
+    schedule_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan_schedule.id'))
+
+    schedule =  db.relationship('PlanSchedule', backref="plan", uselist=False)
 
 
 @dataclass
@@ -173,6 +188,7 @@ class Token(TimestampMixin, db.Model):
     @property
     def environment(self):
         return self.scope.name
+
 
 @dataclass
 class User(TimestampMixin, db.Model):
