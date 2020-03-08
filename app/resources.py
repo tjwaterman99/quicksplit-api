@@ -6,7 +6,7 @@ from funcy import decorator
 
 from app.models import (
     db, Account, User, Token, Experiment, Subject, Conversion, Exposure, Role,
-    Cohort, Scope, Event, Plan
+    Cohort, Scope, Event, Plan, Contact
 )
 from app.services import ExperimentResultCalculator
 from app.sql import recent_events
@@ -180,6 +180,22 @@ class PlansResource(Resource):
         return Plan.query.filter(Plan.public==True).all()
 
 
+class ContactsResource(Resource):
+
+    @params("email", "subject", "message")
+    def post(self, email, subject, message):
+        missing_fields = []
+        if not email:
+            missing_fields.append("Email")
+        if not subject:
+            missing_fields.append("Subject")
+        if not message:
+            missing_fields.append("Message")
+
+        if missing_fields:
+            raise ApiException(401, f"Please include the following information: {missing_fields}")
+        return Contact.create(email=email, subject=subject, message=message)
+
 
 api.add_resource(IndexResource, '/')
 api.add_resource(UserResource, '/user')
@@ -194,3 +210,4 @@ api.add_resource(TokensResource, '/tokens')
 api.add_resource(RecentResource, '/recent')
 api.add_resource(EventsResource, '/events')
 api.add_resource(PlansResource, '/plans')
+api.add_resource(ContactsResource, '/contacts')

@@ -85,6 +85,34 @@ class EventTrackerMixin(object):
 
 
 @dataclass
+class Contact(TimestampMixin, db.Model):
+    id: str
+    email: str
+    message: str
+    subject: str
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'))
+    email = db.Column(db.String(), nullable=False, index=True)
+    subject = db.Column(db.String(), nullable=False)
+    message = db.Column(db.String(), nullable=False)
+
+    user = db.relationship("User", lazy="joined", uselist=False)
+
+    @classmethod
+    def create(cls, email, subject, message):
+        if g.token:
+            user = g.token.user
+        else:
+            user = User.query.filter(User.email==email).first()
+        contact = cls(user=user, email=email, subject=subject, message=message)
+        db.session.add(contact)
+        db.session.flush()
+        return contact
+
+
+
+@dataclass
 class Event(TimestampMixin, db.Model):
     id: str
     name: str
