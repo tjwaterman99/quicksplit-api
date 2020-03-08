@@ -2,7 +2,7 @@ from flask import request
 from pytest import raises
 
 from app.resources import params
-from app.models import User, Experiment, Exposure, Conversion, Scope
+from app.models import User, Experiment, Exposure, Conversion, Scope, Contact
 from app.exceptions import ApiException
 
 
@@ -412,3 +412,19 @@ def test_plans_resource_get(db, client, user):
     resp = client.get("/plans")
     assert resp.status_code == 200
     assert len(resp.json['data']) == expected_public_plan_count
+
+
+def test_contacts_resource_post(db, client, user):
+    resp  = client.post('/contacts', json={
+        'email': "tester",
+        'message': "what's the news?",
+        'subject':  "hello world"
+    })
+    assert resp.status_code == 200
+    assert resp.json['data']['email'] == 'tester'
+
+    contact = Contact.query.first()
+    assert contact.user == user
+    assert contact.email == "tester"
+    assert contact.message
+    assert contact.subject
