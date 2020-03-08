@@ -128,6 +128,12 @@ class Plan(TimestampMixin, db.Model):
 
     schedule =  db.relationship('PlanSchedule', backref="plan", uselist=False)
 
+    def __lt__(self, other):
+        return self.price_in_cents < other.price_in_cents
+
+    def __eq__(self, other):
+        return self.id == other.id
+
 
 @dataclass
 class Account(TimestampMixin, db.Model):
@@ -135,8 +141,12 @@ class Account(TimestampMixin, db.Model):
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     plan_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=False)
+    downgrade_plan_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=True)
+    downgrade_at = db.Column(db.Date(), nullable=True)
+    bill_at = db.Column(db.Date(), nullable=True)
 
-    plan = db.relationship('Plan', backref='accounts', lazy="joined")
+    plan = db.relationship('Plan', backref='accounts', lazy="joined", foreign_keys=[plan_id])
+    downgrade_plan = db.relationship('Plan', lazy="joined", foreign_keys=[downgrade_plan_id])
 
     @classmethod
     def create(cls, plan=None):
@@ -144,8 +154,36 @@ class Account(TimestampMixin, db.Model):
         account = cls(plan=plan)
         return account
 
+    @classmethod
+    def load_billable_accounts(cls, date):
+        return cls.query.filter(cls.bill_at==date).all()
+
+    @classmethod
+    def load_downgradable_accounts(cls, date):
+        return cls.query.filter(cls.downgrade_at==date).all()
+
     def change_plan(self, plan):
+        if plan == self.plan:
+            return
+        elif plan > self.plan:
+            self.upgrade(plan)
+        else:
+            self.downgrade(plan)
+
+    def upgrade(self, plan):
         self.plan = plan
+        self.bill_at = dt.datetime.now().date() + self.plan.schedule.interval
+        db.session.add(self)
+        db.session.flush()
+
+    def downgrade(self, plan, immediate=False):
+        if immediate is True:
+            self.plan = plan
+        else:
+            self.downgrade_plan = plan
+            self.downgrade_at = self.bill_at
+        if plan.price_in_cents == 0:
+            self.bill_at = None
         db.session.add(self)
         db.session.flush()
 

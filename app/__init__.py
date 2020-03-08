@@ -7,7 +7,10 @@ from flask_cors import CORS
 from werkzeug.utils import import_string
 
 from app.resources import api
-from app.models import db, Account, User, Token, Experiment, Subject, Exposure, Conversion, Cohort, Scope
+from app.models import (
+    db, Account, User, Token, Experiment, Subject, Exposure, Conversion,
+    Cohort, Scope, PlanSchedule
+)
 from app.services import ExperimentResultCalculator
 from app.exceptions import ApiException
 from app.commands import seed
@@ -74,6 +77,7 @@ def shell_context():
         'Scope': Scope,
         'Token': Token,
         'ExperimentResultCalculator': ExperimentResultCalculator,
+        'PlanSchedule': PlanSchedule,
         'user': User.query.order_by(User.created_at.desc()).first()
     }
 
