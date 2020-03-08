@@ -83,3 +83,32 @@ def revision_99ab26e65607_down():
         plan.price_in_cents = int(plan.price_in_cents / 10)
     db.session.add_all(plans)
     db.session.commit()
+
+
+# Raise prices (developer = $500/mo, team = $1500/mo)
+def revision_6e332fd22e34_up():
+    print_revision_function_name()
+    developer_plans = Plan.query.filter(Plan.name=="developer").all()
+    for plan in developer_plans:
+        plan.price_in_cents = plan.price_in_cents  * 10   # change  from $50/mo -> $500/mo
+        db.session.add(plan)
+
+    team_plans = Plan.query.filter(Plan.name=="team").all()
+    for plan in team_plans:
+        plan.price_in_cents = plan.price_in_cents * 6  # change from $250/mo -> $1,500/mo
+        db.session.add(plan)
+    db.session.commit()
+
+
+def revision_6e332fd22e34_down():
+    print_revision_function_name()
+    developer_plans = Plan.query.filter(Plan.name=="developer").all()
+    for plan in developer_plans:
+        plan.price_in_cents = plan.price_in_cents  / 10   # change  from $500/mo -> $50/mo
+        db.session.add(plan)
+
+    team_plans = Plan.query.filter(Plan.name=="team").all()
+    for plan in team_plans:
+        plan.price_in_cents = plan.price_in_cents / 6  # change from $1,500/mo -> $250/mo
+        db.session.add(plan)
+    db.session.commit()

@@ -9,7 +9,7 @@ import sqlalchemy
 from app import create_app
 from app.models import (
     db as _db, Role, Plan, Account, User, Subject, Experiment, Exposure,
-    Conversion, Token, Cohort, Scope
+    Conversion, Token, Cohort, Scope, PlanSchedule
 )
 from app.seeds import plans, roles, scopes, plan_schedules
 
@@ -82,6 +82,30 @@ def free_plan(db):
 @pytest.fixture()
 def paid_plan(db):
     return Plan.query.filter(Plan.price_in_cents > 0).first()
+
+
+@pytest.fixture()
+def monthly_schedule(db):
+    return PlanSchedule.query.filter(PlanSchedule.name=="monthly").first()
+
+
+@pytest.fixture()
+def annual_schedule(db):
+    return PlanSchedule.query.filter(PlanSchedule.name=="annual").first()
+
+
+@pytest.fixture()
+def monthly_developer_plan(db,  monthly_schedule):
+    return Plan.query.filter(Plan.name=="developer")\
+                     .filter(Plan.schedule_id==monthly_schedule.id)\
+                     .first()
+
+
+@pytest.fixture()
+def annual_developer_plan(db,  annual_schedule):
+    return Plan.query.filter(Plan.name=="developer")\
+                     .filter(Plan.schedule_id==annual_schedule.id)\
+                     .first()
 
 
 @pytest.fixture()

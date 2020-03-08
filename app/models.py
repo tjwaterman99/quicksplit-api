@@ -140,9 +140,9 @@ class Order(TimestampMixin, db.Model):
     id: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    plan_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'))
-    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'))
-    amount = db.Column(db.Integer(), nullable=False)
+    plan_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=False)
+    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False)
+    amount = db.Column(db.Integer(), nullable=False, index=True)
 
     account = db.relationship('Account', backref=db.backref('orders', lazy="dynamic"), lazy="joined")
     plan = db.relationship('Plan', backref=db.backref('orders', lazy="dynamic"), lazy="joined")
@@ -152,6 +152,39 @@ class Order(TimestampMixin, db.Model):
         order = cls(plan=plan, account=account, amount=amount)
         db.session.add(order)
         db.session.flush()
+        return order
+
+    def __repr__(self):
+        return f"<Order ${self.amount / 100} ({self.account.id}, {self.plan.name} [{self.plan.schedule.interval}])>"
+
+
+@dataclass
+class PlanChange(TimestampMixin, db.Model):
+    id: str
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False)
+    plan_change_from_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=False)
+    plan_change_to_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=False)
+    order_id = db.Column(UUID(as_uuid=True), db.ForeignKey('order.id'), nullable=True)
+
+    __tablename__ = "plan_change"
+
+    plan_change_from = db.relationship('Plan', foreign_keys=[plan_change_from_id], lazy="joined")
+    plan_change_to = db.relationship('Plan', foreign_keys=[plan_change_to_id], lazy="joined")
+    account = db.relationship('Account', backref=db.backref('plan_changes', lazy="dynamic"), lazy="joined")
+    order = db.relationship('Order', backref=db.backref('plan_change', lazy="joined", uselist=False), lazy="joined")
+
+    @classmethod
+    def create(cls, account, plan_change_from, plan_change_to, order=None):
+        plan_change = cls(account=account, plan_change_from=plan_change_from,
+                          plan_change_to=plan_change_to, order=order)
+        db.session.add(plan_change)
+        db.session.flush()
+        return plan_change
+
+    def __repr__(self):
+        return f"<PlanChange [{self.plan_change_from.name} to {self.plan_change_to.name}]>"
 
 
 @dataclass
@@ -183,13 +216,19 @@ class Account(TimestampMixin, db.Model):
     def load_downgradable_accounts(cls, date):
         return cls.query.filter(cls.downgrade_at==date).all()
 
+    # TODO: Stripe integration and handling billing  errors
     def change_plan(self, plan):
+        current_plan = self.plan
+        print(plan, current_plan)
         if plan == self.plan:
             return
         elif plan > self.plan:
-            self.upgrade(plan)
+            order = self.upgrade(plan)
         else:
             self.downgrade(plan)
+            order = None
+        return PlanChange.create(account=self, plan_change_from=current_plan,
+                                 plan_change_to=plan, order=order)
 
     def charge(self, amount, plan):
         return Order.create(plan=plan, account=self, amount=amount)
@@ -207,11 +246,12 @@ class Account(TimestampMixin, db.Model):
         return self.plan.price_in_cents * self.days_until_next_bill / self.plan.schedule.interval.days
 
     def upgrade(self, plan):
-        self.charge(plan.price_in_cents - self.billing_credits, plan=plan)
+        order = self.charge(plan.price_in_cents - self.billing_credits, plan=plan)
         self.plan = plan
         self.bill_at = dt.datetime.now().date() + self.plan.schedule.interval
         db.session.add(self)
         db.session.flush()
+        return order
 
     def downgrade(self, plan, immediate=False):
         if immediate is True:

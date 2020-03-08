@@ -1,7 +1,7 @@
 import datetime as dt
 from unittest.mock import patch
 
-from app.models import Account, Order
+from app.models import Account, Order, PlanChange
 
 
 def test_account_can_change_plans(db, user, paid_plan, free_plan):
@@ -81,10 +81,54 @@ def test_billing_credits(db, user, paid_plan):
     assert user.account.billing_credits == 0
 
 
-# TODO: test these plan type changes
-# Free to free
-# Paid to free
-# Paid to paid
-# Same paid to same paid
-# Same paid to different billing cycle duration
-#
+def test_monthly_developer_plan_to_annual_developer_plan(db, user,
+    free_plan, monthly_developer_plan,  annual_developer_plan):
+    monthly_change = user.account.change_plan(monthly_developer_plan)
+    annual_change = user.account.change_plan(annual_developer_plan)
+
+    plan_changes = user.account.plan_changes.all()
+    assert user.account.plan == annual_developer_plan
+    assert len(plan_changes) == 2
+    assert annual_change in plan_changes
+    assert monthly_change in plan_changes
+    assert plan_changes[0].plan_change_from == free_plan
+    assert plan_changes[0].plan_change_to == monthly_developer_plan
+    assert plan_changes[1].plan_change_from == monthly_developer_plan
+    assert plan_changes[1].plan_change_to == annual_developer_plan
+
+    orders = user.account.orders.all()
+    assert len(orders) == 2
+    assert orders[0].amount == monthly_developer_plan.price_in_cents
+    # Price should be lower, because user is still on day 1 of their monthly plan
+    assert orders[1].amount == annual_developer_plan.price_in_cents - monthly_developer_plan.price_in_cents
+
+
+def test_free_plan_to_free_plan(db, user, free_plan):
+    plan_change = user.account.change_plan(free_plan)
+    assert plan_change is None
+
+
+def test_developer_monthly_to_developer_monthly(db, user, monthly_developer_plan):
+    first_plan_change = user.account.change_plan(monthly_developer_plan)
+    second_plan_change = user.account.change_plan(monthly_developer_plan)
+    plan_changes = user.account.plan_changes.all()
+
+    assert first_plan_change in plan_changes
+    assert second_plan_change is None
+    assert second_plan_change not in plan_changes
+
+
+def test_paid_plan_to_free_plan(db, user, annual_developer_plan, free_plan):
+    first_plan_change = user.account.change_plan(annual_developer_plan)
+    second_plan_change = user.account.change_plan(free_plan)
+    assert user.account.plan == annual_developer_plan
+
+    plan_changes = user.account.plan_changes.all()
+    assert first_plan_change in plan_changes
+    assert second_plan_change in plan_changes
+    assert user.account.plan == annual_developer_plan
+
+    orders =  user.account.orders.all()
+    assert len(orders) == 1
+    assert orders[0]  == first_plan_change.order
+    assert second_plan_change.order == None
