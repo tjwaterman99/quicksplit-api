@@ -125,6 +125,8 @@ class Plan(TimestampMixin, db.Model):
     max_subjects_per_experiment = db.Column(db.Integer(), nullable=False)
     max_active_experiments = db.Column(db.Integer(), nullable=False)
     schedule_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan_schedule.id'))
+    public = db.Column(db.Boolean(), default=False)
+    self_serve = db.Column(db.Boolean(), default=False)
 
     schedule =  db.relationship('PlanSchedule', backref="plan", uselist=False)
 

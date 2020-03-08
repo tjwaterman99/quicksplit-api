@@ -74,6 +74,11 @@ def test_api_status(client):
     assert resp.status_code == 200
 
 
+def test_plans_get(client):
+    resp = client.get('/plans')
+    assert resp.status_code == 200
+
+
 def test_user_registration(client, email, password):
     resp = client.post('/user', data={
         'email': email,

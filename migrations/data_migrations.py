@@ -112,3 +112,15 @@ def revision_6e332fd22e34_down():
         plan.price_in_cents = plan.price_in_cents / 6  # change from $1,500/mo -> $250/mo
         db.session.add(plan)
     db.session.commit()
+
+
+def revision_91e81219d4ae_up():
+    print_revision_function_name()
+    db.session.execute('update plan set self_serve=true')
+    db.session.execute('update plan set public=true')
+
+
+def revision_91e81219d4ae_down():
+    print_revision_function_name()
+    db.session.execute('update plan set self_serve=null')
+    db.session.execute('update plan set public=null')

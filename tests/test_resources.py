@@ -404,3 +404,11 @@ def test_events_resource_post(db, client, user):
     assert resp.json['data']['name'] == 'test event'
     assert resp.json['data']['data'] == {'a': 1, 'b': 2, 'c': [4,5,6]}
     assert resp.json['data']['user_id'] == None
+
+
+def test_plans_resource_get(db, client, user):
+    # Changing this number will break the front end styles
+    expected_public_plan_count = 6
+    resp = client.get("/plans")
+    assert resp.status_code == 200
+    assert len(resp.json['data']) == expected_public_plan_count

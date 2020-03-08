@@ -6,7 +6,7 @@ from funcy import decorator
 
 from app.models import (
     db, Account, User, Token, Experiment, Subject, Conversion, Exposure, Role,
-    Cohort, Scope, Event
+    Cohort, Scope, Event, Plan
 )
 from app.services import ExperimentResultCalculator
 from app.sql import recent_events
@@ -174,6 +174,10 @@ class EventsResource(Resource):
         return event
 
 
+class PlansResource(Resource):
+
+    def get(self):
+        return Plan.query.filter(Plan.public==True).all()
 
 
 
@@ -189,3 +193,4 @@ api.add_resource(DeactivateResource, '/deactivate')
 api.add_resource(TokensResource, '/tokens')
 api.add_resource(RecentResource, '/recent')
 api.add_resource(EventsResource, '/events')
+api.add_resource(PlansResource, '/plans')
