@@ -132,7 +132,26 @@ class Plan(TimestampMixin, db.Model):
         return self.price_in_cents < other.price_in_cents
 
     def __eq__(self, other):
-        return self.id == other.id
+        return self.price_in_cents == other.price_in_cents
+
+
+@dataclass
+class Order(TimestampMixin, db.Model):
+    id: str
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    plan_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'))
+    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'))
+    amount = db.Column(db.Integer(), nullable=False)
+
+    account = db.relationship('Account', backref=db.backref('orders', lazy="dynamic"), lazy="joined")
+    plan = db.relationship('Plan', backref=db.backref('orders', lazy="dynamic"), lazy="joined")
+
+    @classmethod
+    def create(cls, plan, account, amount):
+        order = cls(plan=plan, account=account, amount=amount)
+        db.session.add(order)
+        db.session.flush()
 
 
 @dataclass
@@ -152,6 +171,8 @@ class Account(TimestampMixin, db.Model):
     def create(cls, plan=None):
         plan = plan or Plan.query.filter(Plan.price_in_cents==0).first()
         account = cls(plan=plan)
+        db.session.add(account)
+        db.session.flush()
         return account
 
     @classmethod
@@ -170,7 +191,23 @@ class Account(TimestampMixin, db.Model):
         else:
             self.downgrade(plan)
 
+    def charge(self, amount, plan):
+        return Order.create(plan=plan, account=self, amount=amount)
+
+    @property
+    def days_until_next_bill(self):
+        if not self.bill_at:
+            return None
+        return (self.bill_at - dt.datetime.now().date()).days
+
+    @property
+    def billing_credits(self):
+        if not self.bill_at:
+            return 0
+        return self.plan.price_in_cents * self.days_until_next_bill / self.plan.schedule.interval.days
+
     def upgrade(self, plan):
+        self.charge(plan.price_in_cents - self.billing_credits, plan=plan)
         self.plan = plan
         self.bill_at = dt.datetime.now().date() + self.plan.schedule.interval
         db.session.add(self)
@@ -179,11 +216,14 @@ class Account(TimestampMixin, db.Model):
     def downgrade(self, plan, immediate=False):
         if immediate is True:
             self.plan = plan
+            self.downgrade_at = None
         else:
             self.downgrade_plan = plan
             self.downgrade_at = self.bill_at
         if plan.price_in_cents == 0:
             self.bill_at = None
+        else:
+            self.bill_at = dt.datetime.now() + plan.schedule.interval.days
         db.session.add(self)
         db.session.flush()
 

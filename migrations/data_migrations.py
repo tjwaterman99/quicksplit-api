@@ -14,10 +14,6 @@ def print_revision_function_name():
     print(f"Running data migration: {call_frame[1][3]}")
 
 
-def revision_63839d762be5():
-    print_revision_function_name()
-
-
 def revision_8916265b8931_up():
     print_revision_function_name()
     db.session.add_all(plan_schedules)
@@ -61,4 +57,29 @@ def revision_a7478a966ea0_down():
                       .all()
     for plan in plans:
         db.session.delete(plan)
+    db.session.commit()
+
+
+def revision_99ab26e65607_up():
+    # Make sure annual plans have higher prices
+    print_revision_function_name()
+    annual_schedule_id = PlanSchedule.query.filter(PlanSchedule.name=='annual').first().id
+    plans = Plan.query.filter(Plan.name.in_(['team', 'developer'])) \
+                      .filter(Plan.schedule_id==annual_schedule_id) \
+                      .all()
+    for plan in plans:
+        plan.price_in_cents = plan.price_in_cents * 10
+    db.session.add_all(plans)
+    db.session.commit()
+
+
+def revision_99ab26e65607_down():
+    print_revision_function_name()
+    annual_schedule_id = PlanSchedule.query.filter(PlanSchedule.name=='annual').first().id
+    plans = Plan.query.filter(Plan.name.in_(['team', 'developer'])) \
+                      .filter(Plan.schedule_id==annual_schedule_id) \
+                      .all()
+    for plan in plans:
+        plan.price_in_cents = int(plan.price_in_cents / 10)
+    db.session.add_all(plans)
     db.session.commit()
