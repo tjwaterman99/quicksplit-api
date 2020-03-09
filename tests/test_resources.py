@@ -264,7 +264,6 @@ def test_tokens_resource(db, client, user):
     assert resp.status_code == 200
     assert resp.json['data'][0]['id'] == str(user.tokens[0].id)
     assert len(resp.json['data']) == 4
-    assert resp.json['data'][0]['private'] == True
 
 
 def test_staging_client_inserts_to_staging(db, admin_staging_client, user, experiment):
