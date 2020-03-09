@@ -46,6 +46,11 @@ def database(app):
         _db.drop_all()
 
 
+@pytest.fixture(scope='session')
+def stripe_customer_id():
+    return Account.create_stripe_customer(stripe_livemode=False)['id']
+
+
 @pytest.fixture()
 def email():
     return f"tester@gmail.com"
@@ -70,8 +75,14 @@ def staging_scope():
 
 
 @pytest.fixture()
-def user(db, email, production_scope):
-    return User.create(email=email, password="password")
+def account(db, stripe_customer_id):
+    account = Account.create(stripe_customer_id=stripe_customer_id)
+    return account
+
+
+@pytest.fixture()
+def user(db, email, account, production_scope):
+    return User.create(email=email, password="password", account=account)
 
 
 @pytest.fixture()

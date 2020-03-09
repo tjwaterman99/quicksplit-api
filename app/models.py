@@ -112,7 +112,6 @@ class Contact(TimestampMixin, db.Model):
         return contact
 
 
-
 @dataclass
 class Event(TimestampMixin, db.Model):
     id: str
@@ -415,8 +414,8 @@ class User(TimestampMixin, db.Model):
                 return token
 
     @classmethod
-    def create(cls, email, password):
-        account = Account.create()
+    def create(cls, email, password, account=None):
+        account = account or Account.create()
         user = cls(email=email, account=account)
         try:
             user.set_password_hash(password)
@@ -524,6 +523,7 @@ class Subject(EventTrackerMixin, TimestampMixin, db.Model):
     @property
     def subject_id(self):
         return self.name
+
 
 @dataclass
 class Cohort(EventTrackerMixin, TimestampMixin, db.Model):
