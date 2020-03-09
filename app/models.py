@@ -243,6 +243,7 @@ class Account(TimestampMixin, db.Model):
     @classmethod
     def create(cls, plan=None, stripe_customer_id=None, stripe_livemode=False):
         plan = plan or Plan.query.filter(Plan.price_in_cents==0).first()
+        stripe_livemode = stripe_livemode or app.env == "production"
         if not stripe_customer_id:
             stripe_customer = cls.create_stripe_customer(stripe_livemode=stripe_livemode)
             stripe_customer_id = stripe_customer['id']
