@@ -243,7 +243,7 @@ class Account(TimestampMixin, db.Model):
     @classmethod
     def create(cls, plan=None, stripe_customer_id=None, stripe_livemode=False):
         plan = plan or Plan.query.filter(Plan.price_in_cents==0).first()
-        stripe_livemode = stripe_livemode or app.env == "production"
+        stripe_livemode = stripe_livemode or current_app.env == "production"
         if not stripe_customer_id:
             stripe_customer = cls.create_stripe_customer(stripe_livemode=stripe_livemode)
             stripe_customer_id = stripe_customer['id']
@@ -323,6 +323,30 @@ class Account(TimestampMixin, db.Model):
             self.bill_at = dt.datetime.now() + plan.schedule.interval.days
         db.session.add(self)
         db.session.flush()
+
+
+@dataclass
+class PaymentMethod(TimestampMixin, db.Model):
+    account: 'Account'
+    id: str
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False)
+    stripe_payment_method_id = db.Column(db.String(), nullable=False)
+    stripe_data = db.Column(JSONB())
+
+    account = db.relationship("Account", backref=db.backref("payment_methods", lazy="joined"), lazy="joined")
+
+    @classmethod
+    def create(cls, account, stripe_payment_method_id, stripe_data=None):
+        payment_method = cls(
+            account=account,
+            stripe_payment_method_id=stripe_payment_method_id,
+            stripe_data=stripe_data
+        )
+        db.session.add(payment_method)
+        db.session.flush()
+        return payment_method
 
 
 @dataclass

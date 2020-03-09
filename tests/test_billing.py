@@ -82,7 +82,7 @@ def test_billing_credits(db, user, paid_plan):
 
 
 def test_monthly_developer_plan_to_annual_developer_plan(db, user,
-    free_plan, monthly_developer_plan,  annual_developer_plan):
+    free_plan, monthly_developer_plan, annual_developer_plan):
     monthly_change = user.account.change_plan(monthly_developer_plan)
     annual_change = user.account.change_plan(annual_developer_plan)
 
@@ -91,16 +91,16 @@ def test_monthly_developer_plan_to_annual_developer_plan(db, user,
     assert len(plan_changes) == 2
     assert annual_change in plan_changes
     assert monthly_change in plan_changes
-    assert plan_changes[0].plan_change_from == free_plan
-    assert plan_changes[0].plan_change_to == monthly_developer_plan
-    assert plan_changes[1].plan_change_from == monthly_developer_plan
-    assert plan_changes[1].plan_change_to == annual_developer_plan
+    assert plan_changes[1].plan_change_from == free_plan
+    assert plan_changes[1].plan_change_to == monthly_developer_plan
+    assert plan_changes[0].plan_change_from == monthly_developer_plan
+    assert plan_changes[0].plan_change_to == annual_developer_plan
 
     orders = user.account.orders.all()
     assert len(orders) == 2
-    assert orders[0].amount == monthly_developer_plan.price_in_cents
+    assert orders[1].amount == monthly_developer_plan.price_in_cents
     # Price should be lower, because user is still on day 1 of their monthly plan
-    assert orders[1].amount == annual_developer_plan.price_in_cents - monthly_developer_plan.price_in_cents
+    assert orders[0].amount == annual_developer_plan.price_in_cents - monthly_developer_plan.price_in_cents
 
 
 def test_free_plan_to_free_plan(db, user, free_plan):

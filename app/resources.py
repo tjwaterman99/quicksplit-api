@@ -6,7 +6,7 @@ from funcy import decorator
 
 from app.models import (
     db, Account, User, Token, Experiment, Subject, Conversion, Exposure, Role,
-    Cohort, Scope, Event, Plan, Contact
+    Cohort, Scope, Event, Plan, Contact, PaymentMethod
 )
 from app.services import ExperimentResultCalculator
 from app.sql import recent_events
@@ -207,16 +207,19 @@ class AccountPaymentSetupResource(Resource):
 class StripeWebhooksResource(Resource):
 
     def payment_method_attached(self):
-        print("Handling payment method attached")
+        stripe_customer_id = request.json['data']['object']['customer']
+        account = Account.query.filter(Account.stripe_customer_id==stripe_customer_id).first()
+        if not account:
+            raise ApiException(404, f"No account with stripe customer id {stripe_customer_id} found.")
+        stripe_payment_method_id = request.json['data']['object']['id']
+        return PaymentMethod.create(account=account, stripe_data=request.json, stripe_payment_method_id=stripe_payment_method_id)
 
     def post(self):
+        current_app.logger.info(f"Received stripe webhook {request.json['type']} ({request.json['id']})")
         if request.json['type'] == "payment_method.attached":
-            self.payment_method_attached()
-
-    def get(self):
-        print("GET")
-        print(request.json)
-        print(request)
+            return self.payment_method_attached()
+        else:
+            logger.info(f"No handling for stripe webhook type: {request.json['type']} ({request.json['id']})")
 
 
 api.add_resource(IndexResource, '/')
