@@ -204,6 +204,21 @@ class AccountPaymentSetupResource(Resource):
         return g.user.account.create_stripe_setup_intent()
 
 
+class StripeWebhooksResource(Resource):
+
+    def payment_method_attached(self):
+        print("Handling payment method attached")
+
+    def post(self):
+        if request.json['type'] == "payment_method.attached":
+            self.payment_method_attached()
+
+    def get(self):
+        print("GET")
+        print(request.json)
+        print(request)
+
+
 api.add_resource(IndexResource, '/')
 api.add_resource(UserResource, '/user')
 api.add_resource(ExperimentsResource, '/experiments')
@@ -219,3 +234,4 @@ api.add_resource(EventsResource, '/events')
 api.add_resource(PlansResource, '/plans')
 api.add_resource(ContactsResource, '/contacts')
 api.add_resource(AccountPaymentSetupResource, '/account/payment-setup')
+api.add_resource(StripeWebhooksResource, '/webhooks/stripe')

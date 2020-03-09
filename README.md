@@ -24,6 +24,8 @@ docker-compose exec web flask db upgrade
 docker-compose exec web flask seed all
 ```
 
+### Upgrading a development environment
+
 If you're upgrading the database from a specific version, you may need to run specific seeding commands, as the `flask seed all` command assumes the database has no existing data.
 
 To upgrade a specific version, locate the current revision of the database.
@@ -32,7 +34,7 @@ To upgrade a specific version, locate the current revision of the database.
 docker-compose exec web flask db current
 ```
 
-Then, pass that version to the command `flask seed revision` command.
+Then, pass that version to the command `flask seed revision --up` command.
 
 ```
 docker-compose exec web flask seed $REVISION --up
@@ -44,12 +46,26 @@ You should also be able to remove the data for the revision by using `--down`.
 docker-compose exec web flask seed $REVISION --down
 ```
 
-You can create a test user with the CLI that gets installed in the web container.
+### Listening to Stripe webhooks
+
+The application's billing behavior depends on listening to webhooks that Stripe will send. In production, those webhooks get sent to the api.quicksplit.io url, but in development we can use the stripe CLI to forward those events to the app running on localhost.
+
+Install the cli to forward the events.
 
 ```
-docker-compose exec web quicksplit register \
-  --email [youremail@gmail.com] \
-  --password [notsecure]
+brew install stripe/stripe-cli/stripe
+```
+
+Log in if necessary.
+
+```
+stripe login
+```
+
+Forward the stripe events to the `/webhooks/stripe` route.
+
+```
+stripe listen -f http://127.0.0.1:5000/webhooks/stripe
 ```
 
 ## Testing
