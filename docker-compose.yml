@@ -35,6 +35,13 @@ services:
       PYTHONPATH: /
       DATABASE_URL: postgresql://developer:notsecret@postgres:5432/development
       QUICKSPLIT_API_URL: http://web:5000
+      # These are all "test" keys in development, but we include all
+      # versions in production so that test-users get sent to the test-stripe
+      # data, even if they're created on the production app
+      STRIPE_TEST_PUBLISHABLE_KEY: pk_test_vs6w4emCv9szUa8mJyeXKTey00IV5800C2
+      STRIPE_TEST_SECRET_KEY: sk_test_InjhthRyfgYjrOXULoSylt4g009H6voKLf
+      STRIPE_PRODUCTION_PUBLISHABLE_KEY: pk_test_vs6w4emCv9szUa8mJyeXKTey00IV5800C2
+      STRIPE_PRODUCTION_SECRET_KEY: sk_test_InjhthRyfgYjrOXULoSylt4g009H6voKLf
   release:
     build:
       dockerfile: Dockerfile.release

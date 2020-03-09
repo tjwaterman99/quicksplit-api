@@ -197,6 +197,13 @@ class ContactsResource(Resource):
         return Contact.create(email=email, subject=subject, message=message)
 
 
+class AccountPaymentSetupResource(Resource):
+
+    @protected()
+    def get(self):
+        return g.user.account.create_stripe_setup_intent()
+
+
 api.add_resource(IndexResource, '/')
 api.add_resource(UserResource, '/user')
 api.add_resource(ExperimentsResource, '/experiments')
@@ -211,3 +218,4 @@ api.add_resource(RecentResource, '/recent')
 api.add_resource(EventsResource, '/events')
 api.add_resource(PlansResource, '/plans')
 api.add_resource(ContactsResource, '/contacts')
+api.add_resource(AccountPaymentSetupResource, '/account/payment-setup')

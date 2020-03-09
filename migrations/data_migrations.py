@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from flask import current_app
 
-from app.models import db, Plan, PlanSchedule
+from app.models import db, Plan, PlanSchedule, Account
 from app.seeds import plan_schedules, monthly_schedule_id, annual_schedule_id
 
 
@@ -124,3 +124,19 @@ def revision_91e81219d4ae_down():
     print_revision_function_name()
     db.session.execute('update plan set self_serve=null')
     db.session.execute('update plan set public=null')
+
+
+def revision_fa3692965b28_up():
+    print_revision_function_name()
+    unattached_accounts = Account.query.filter(Account.stripe_customer_id==None).all()
+    for account in unattached_accounts:
+        stripe_customer = Account.create_stripe_customer(stripe_livemode=False)
+        account.stripe_customer_id = stripe_customer['id']
+        account.stripe_livemode = False
+        db.session.add(account)
+        current_app.logger.info(f"Attached {account.stripe_customer_id} to account {account.id}")
+    db.session.commit()
+
+
+def revision_fa3692965b28_down():
+    print_revision_function_name()

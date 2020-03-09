@@ -9,6 +9,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.dialects.postgresql import UUID, insert, JSONB, INTERVAL
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
+import stripe
 
 from app.exceptions import ApiException
 
@@ -226,14 +227,27 @@ class Account(TimestampMixin, db.Model):
     downgrade_plan_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=True)
     downgrade_at = db.Column(db.Date(), nullable=True)
     bill_at = db.Column(db.Date(), nullable=True)
+    stripe_customer_id = db.Column(db.String())
+    stripe_livemode = db.Column(db.Boolean(), default=False)
 
     plan = db.relationship('Plan', backref='accounts', lazy="joined", foreign_keys=[plan_id])
     downgrade_plan = db.relationship('Plan', lazy="joined", foreign_keys=[downgrade_plan_id])
 
     @classmethod
-    def create(cls, plan=None):
+    def create_stripe_customer(cls, stripe_livemode=False):
+        if stripe_livemode:
+            api_key = current_app.config['STRIPE_PRODUCTION_SECRET_KEY']
+        else:
+            api_key = current_app.config['STRIPE_TEST_SECRET_KEY']
+        return stripe.Customer.create(api_key=api_key)
+
+    @classmethod
+    def create(cls, plan=None, stripe_customer_id=None, stripe_livemode=False):
         plan = plan or Plan.query.filter(Plan.price_in_cents==0).first()
-        account = cls(plan=plan)
+        if not stripe_customer_id:
+            stripe_customer = cls.create_stripe_customer(stripe_livemode=stripe_livemode)
+            stripe_customer_id = stripe_customer['id']
+        account = cls(plan=plan, stripe_customer_id=stripe_customer_id, stripe_livemode=stripe_livemode)
         db.session.add(account)
         db.session.flush()
         return account
@@ -245,6 +259,19 @@ class Account(TimestampMixin, db.Model):
     @classmethod
     def load_downgradable_accounts(cls, date):
         return cls.query.filter(cls.downgrade_at==date).all()
+
+    @property
+    def stripe_secret_key(self):
+        if self.stripe_livemode:
+            return current_app.config['STRIPE_PRODUCTION_SECRET_KEY']
+        else:
+            return current_app.config['STRIPE_TEST_SECRET_KEY']
+
+    def create_stripe_setup_intent(self):
+        return stripe.SetupIntent.create(
+            api_key=self.stripe_secret_key,
+            customer=self.stripe_customer_id
+        )
 
     # TODO: Stripe integration and handling billing  errors
     def change_plan(self, plan):

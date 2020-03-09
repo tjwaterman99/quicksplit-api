@@ -5,6 +5,7 @@ from flask import Flask, current_app, json, make_response, request, g
 from flask_migrate import Migrate
 from flask_cors import CORS
 from werkzeug.utils import import_string
+import stripe
 
 from app.resources import api
 from app.models import (
@@ -78,7 +79,8 @@ def shell_context():
         'Token': Token,
         'ExperimentResultCalculator': ExperimentResultCalculator,
         'PlanSchedule': PlanSchedule,
-        'user': User.query.order_by(User.created_at.desc()).first()
+        'user': User.query.order_by(User.created_at.desc()).first(),
+        'stripe': stripe
     }
 
 

@@ -16,7 +16,8 @@ RUN pip install flask \
 								researchpy \
 								terminaltables \
 								funcy==1.14 \
-								flask-cors==3.0.8
+								flask-cors==3.0.8 \
+								stripe==2.37.2
 
 COPY ./app /app
 COPY ./tests /tests

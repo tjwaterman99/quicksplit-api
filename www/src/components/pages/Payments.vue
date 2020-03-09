@@ -28,13 +28,23 @@
 
 
 <!--
-note the other types of Stripe elements besides just card are documented here:
+note the other types of Stripe elements besides just cards are documented here:
 https://stripe.com/docs/js/elements_object/create_element?type=cardNumber
 
-TODO: have the card element send data to Stripe, and trigger a webook to our
-server which stores the payment method token. We can test the payments on
-localhost using the stripe CLI: https://stripe.com/docs/webhooks/test
+TODO: follow the guide at https://stripe.com/docs/payments/save-and-reuse
+to complete a "save and re-use card later" payment set up.
+
+First, we need to create a stripe customer on Account.create.
+
+The stripe customer should then create a "payment intent" from stripe, and
+let the front end fetch that secret from the backend. We can use that payment
+intent plus the stripe card to attach the card to the customer on Stripe's end.
+
+To re-use that payment method later, we need to fetch it's payment id from
+Stripe. That can be accomplished by listening for the webhook payment_method.attached
+and then storing the data from that event on the account.
 -->
+
 <script src="https://js.stripe.com/v3/"></script>
 <script>
 import Header from '../Header';
@@ -44,6 +54,7 @@ var elements = stripe.elements()
 var cardExpiryElement = elements.create('cardExpiry');
 var cardCvcElement = elements.create('cardCvc');
 var cardNumberElement = elements.create('cardNumber');
+
 
 export default {
 	name: "Payments",
@@ -55,20 +66,41 @@ export default {
 			cardNumberComplete: false,
 			cardExpiryComplete: false,
 			cardCvcComplete: false,
+			paymentSetupIntent: null
 		}
 	},
 	methods: {
 		handleAddPayment: function(event) {
 			event.preventDefault()
 			var that = this;
-			stripe.createPaymentMethod({
-				type: 'card',
-				card: cardNumberElement,
-				billing_details: {
-					email: that.$api.user.email
+			stripe.confirmCardSetup(
+				that.paymentSetupIntent.client_secret,
+				{
+					payment_method: {
+						type: 'card',
+						card: cardNumberElement,
+						billing_details: {
+							email: that.$api.user.email
+						}
+					}
+				}
+			).then(function(result) {
+				if (result.error) {
+					console.log(result.error)
+				} else {
+					console.log("Success!")
+					console.log(result)
 				}
 			})
 		}
+	},
+	created: function() {
+		var that = this
+		this.$api.get('/account/payment-setup').then(function(resp) {
+			that.paymentSetupIntent = resp.data.data
+		}).catch(function(error) {
+			console.log(error)
+		})
 	},
 	mounted: function() {
 		var that = this;
