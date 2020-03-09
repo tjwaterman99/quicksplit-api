@@ -51,6 +51,10 @@ services:
       FLASK_ENV: development
       PYTHONPATH: /
       DATABASE_URL: postgresql://developer:notsecret@postgres:5432/development
+      STRIPE_TEST_PUBLISHABLE_KEY: pk_test_vs6w4emCv9szUa8mJyeXKTey00IV5800C2
+      STRIPE_TEST_SECRET_KEY: sk_test_InjhthRyfgYjrOXULoSylt4g009H6voKLf
+      STRIPE_PRODUCTION_PUBLISHABLE_KEY: pk_test_vs6w4emCv9szUa8mJyeXKTey00IV5800C2
+      STRIPE_PRODUCTION_SECRET_KEY: sk_test_InjhthRyfgYjrOXULoSylt4g009H6voKLf
     depends_on:
       - web
       - postgres
