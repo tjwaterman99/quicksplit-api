@@ -43,6 +43,16 @@ def test_experiment_acivate_deactivate(user, db, experiment):
     assert experiment.active == True
 
 
+def test_experiment_create(user, db):
+    experiment = Experiment.create(user=user, name="test_experiment")
+    assert experiment in user.experiments.all()
+
+
+def test_experiment_create_duplicate(user, db, experiment):
+    with pytest.raises(ApiException):
+        experiment2 = Experiment.create(name=experiment.name, user=user)
+
+
 def test_subject_init(db, user, production_scope):
     subject = Subject(name='test-subject-1', account=user.account, scope=production_scope)
     db.session.add(subject)

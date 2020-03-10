@@ -491,14 +491,14 @@ class Experiment(EventTrackerMixin, TimestampMixin, db.Model):
     __table_args__ = (db.UniqueConstraint('user_id', 'name'), )
 
     @classmethod
-    def create(cls, name):
-        experiment = cls(user=g.user, name=name)
+    def create(cls, name, user):
+        experiment = cls(user=user, name=name)
         try:
-            experiment.activate()
+            db.session.add(experiment)
+            db.session.flush()
         except IntegrityError:
             raise ApiException(403, "Experiment with that name already exists")
-        db.session.add(experiment)
-        db.session.flush()
+        experiment.activate()
         return experiment
 
     @property

@@ -1,3 +1,4 @@
+import traceback
 import os
 import datetime
 
@@ -39,6 +40,7 @@ def handle_uncaught_exception(exc):
     if not current_app.testing:
         db.session.rollback()
     current_app.logger.error("Unhandled error: " + str(exc))
+    current_app.logger.error(traceback.format_exc())
     resp = {
         'data': None,
         'message': "Unexpected exception occured. Please try again later.",

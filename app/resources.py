@@ -83,7 +83,7 @@ class ExperimentsResource(Resource):
     @protected()
     @params('name')
     def post(self, name):
-        return Experiment.create(name)
+        return Experiment.create(name=name, user=g.user)
 
 
 class ExposuresResource(Resource):

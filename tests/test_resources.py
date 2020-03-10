@@ -78,6 +78,13 @@ def test_experiment_post(db, client):
     assert Experiment.query.get(resp.json['data']['id']) is not None
 
 
+def test_experiment_post_duplicate(db, client, experiment):
+    resp = client.post('/experiments', json={
+        'name': experiment.name
+    })
+    assert resp.status_code == 403
+
+
 def test_experiment_post_over_active_limits(db, client, user):
     for name in range(user.account.plan.max_active_experiments + 1):
         resp = client.post('/experiments', json={'name': str(name)})
