@@ -10,7 +10,8 @@ import GetStarted from './components/pages/GetStarted';
 import Contact from './components/pages/Contact';
 import Error404 from './components/pages/Error404';
 import Login from './components/pages/Login';
-import Payments from './components/pages/Payments'
+import Dashboard from './components/pages/Dashboard';
+import Payments from './components/pages/Payments';
 
 import Client from './client';
 
@@ -21,6 +22,7 @@ const routes = [
   { path: '/contact', component: Contact },
   { path: '/login', component: Login },
   { path: '/payments', component: Payments },
+  { path: '/dashboard', component: Dashboard},
 
   { path: '/*', component: Error404 },
 ]
