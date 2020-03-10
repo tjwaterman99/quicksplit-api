@@ -2,13 +2,16 @@
 	<div class="dashboard-nav">
 		<ul>
 			<li>
-				<a href="/dashboard">Quick Split</a>
+				<router-link to="/dashboard">Experiments</router-link>
 			</li>
 			<li>
 				<a href="/get-started">Get Started</a>
 			</li>
 			<li>
 				<a href="/payments">Payments</a>
+			</li>
+			<li>
+				<router-link to="/dashboard/tokens">Tokens</router-link>
 			</li>
 		</ul>
 	</div>

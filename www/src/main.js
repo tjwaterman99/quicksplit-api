@@ -12,6 +12,7 @@ import Error404 from './components/pages/Error404';
 import Login from './components/pages/Login';
 import Dashboard from './components/pages/Dashboard';
 import Payments from './components/pages/Payments';
+import Tokens from './components/dashboard/views/Tokens';
 
 import Client from './client';
 
@@ -23,6 +24,7 @@ const routes = [
   { path: '/login', component: Login },
   { path: '/payments', component: Payments },
   { path: '/dashboard', component: Dashboard},
+  { path: '/dashboard/tokens', component: Tokens},
 
   { path: '/*', component: Error404 },
 ]
@@ -47,3 +49,5 @@ new Vue({
   router,
   render: h => h(App),
 }).$mount('#app')
+
+console.log("Re-loaded :()")

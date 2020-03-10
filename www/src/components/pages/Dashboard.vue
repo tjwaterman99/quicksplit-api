@@ -1,10 +1,8 @@
 <template>
-	<div class="container">
 		<div class="dashboard">
 			<p>Dashboard</p>
 			<p>Coming soon!</p>
 		</div>
-	</div>
 </template>
 
 <script>

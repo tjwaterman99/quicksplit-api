@@ -6,7 +6,7 @@
         <div class="col-md-2">
           <DashboardNavBar />
         </div>
-        <div class="col-md-10">
+        <div class="col-md-8">
           <router-view />
         </div>
       </div>
