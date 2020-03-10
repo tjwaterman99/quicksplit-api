@@ -443,8 +443,9 @@ class User(TimestampMixin, db.Model):
         account = account or Account.create()
         user = cls(email=email, account=account)
         try:
-            user.set_password_hash(password)
-            user.set_tokens()
+            with db.session.no_autoflush:
+                user.set_password_hash(password)
+                user.set_tokens()
             db.session.add(user)
             db.session.flush()
         except IntegrityError as exc:

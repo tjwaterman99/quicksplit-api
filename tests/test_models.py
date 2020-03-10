@@ -4,14 +4,14 @@ from app.models import Account, User, Experiment, Subject, Exposure, Conversion,
 from app.exceptions import ApiException
 
 
-def test_user_create(db, production_scope):
-    user = User.create(email="tester@gmail.com",  password="password")
+def test_user_create(db, email, production_scope):
+    user = User.create(email=email,  password="password")
     assert User.query.first() == user
     assert Account.query.first() == user.account
     assert user.check_password('password')
     assert user.has_role('admin')
     with pytest.raises(ApiException) as exc:
-        User.create(email="tester@gmail.com", password="password")
+        User.create(email=email, password="password")
         assert "User with that email already exists." in exc.message
 
 

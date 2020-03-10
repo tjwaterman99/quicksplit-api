@@ -53,7 +53,7 @@ def stripe_customer_id():
 
 @pytest.fixture()
 def email():
-    return f"tester@gmail.com"
+    return f"tester@quicksplit.io"
 
 
 @pytest.fixture()
