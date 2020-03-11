@@ -6,8 +6,8 @@
 </template>
 
 <script>
-import FaqList from '../faq/FaqList';
-import Header from '../Header';
+import FaqList from '@/components/faq/FaqList';
+import Header from '@/components/Header';
 
 export default {
 	name: "Faq",

@@ -28,7 +28,7 @@ export default {
 
 <style lang="scss" scoped=true>
 
-@import 'src/assets/scss/variables.scss';
+@import 'scss/variables.scss';
 
 .dashboard-nav {
 	background-color: #E4E8EE;

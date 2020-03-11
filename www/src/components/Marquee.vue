@@ -13,7 +13,7 @@
 </template>
 
 <script>
-import RegisterForm from './RegisterForm';
+import RegisterForm from '@/components/RegisterForm';
 
 export default {
 	name: "Marquee",
@@ -25,7 +25,7 @@ export default {
 
 <style lang="scss">
 
-@import "src/assets/scss/variables.scss";
+@import "@/assets/scss/variables.scss";
 
 .marquee {
   background-color: $gray-800;
