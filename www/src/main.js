@@ -1,4 +1,4 @@
-import './assets/scss/styles.scss';
+import '@scss/theme.scss';
 import 'bootstrap';
 
 import Vue from 'vue';
