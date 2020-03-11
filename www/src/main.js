@@ -13,6 +13,7 @@ import Login from './components/pages/Login';
 import Dashboard from './components/pages/Dashboard';
 import Payments from './components/pages/Payments';
 import Tokens from './components/dashboard/views/Tokens';
+import Account from './components/dashboard/views/Account';
 
 import Client from './client';
 
@@ -25,6 +26,7 @@ const routes = [
   { path: '/payments', component: Payments },
   { path: '/dashboard', component: Dashboard},
   { path: '/dashboard/tokens', component: Tokens},
+  { path: '/dashboard/account', component: Account },
 
   { path: '/*', component: Error404 },
 ]

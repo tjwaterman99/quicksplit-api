@@ -220,6 +220,7 @@ class PlanChange(TimestampMixin, db.Model):
 @dataclass
 class Account(TimestampMixin, db.Model):
     plan: Plan
+    id: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     plan_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=False)
@@ -400,6 +401,7 @@ class User(TimestampMixin, db.Model):
     tokens: Token
     email: str
     admin_token: Token
+    account: Account
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'))

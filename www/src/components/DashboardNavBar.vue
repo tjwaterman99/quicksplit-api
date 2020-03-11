@@ -5,10 +5,13 @@
 				<router-link to="/dashboard">Experiments</router-link>
 			</li>
 			<li>
-				<a href="/get-started">Get Started</a>
+				<router-link to="/get-started">Get Started</router-link>
 			</li>
 			<li>
-				<a href="/payments">Payments</a>
+				<router-link to="/payments">Payments</router-link>
+			</li>
+			<li>
+				<router-link to="/dashboard/account">Account</router-link>
 			</li>
 			<li>
 				<router-link to="/dashboard/tokens">Tokens</router-link>

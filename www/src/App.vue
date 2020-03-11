@@ -9,12 +9,17 @@
         <div class="col-md-8">
           <router-view />
         </div>
-      </div>
+        </div>
       </div>
     </div>
+
     <div v-else class="public">
-      <NavBar />
-      <router-view />
+      <div class="row">
+        <div class="col">
+        <NavBar />
+        <router-view />
+      </div>
+    </div>
     </div>
 </div>
 </template>
@@ -32,6 +37,9 @@ export default {
   computed: {
     dashboard: function() {
       return this.$route.path.match('/dashboard')
+    },
+    api: function() {
+      return this.$api
     }
   }
 }

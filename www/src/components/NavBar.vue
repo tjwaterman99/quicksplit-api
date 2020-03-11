@@ -30,10 +30,10 @@
 
 		<ul class="navbar-nav ml-auto" v-else>
 			<li class="nav-item">
-				<a class="nav-link disabled">{{ this.$api.user.email }}</a>
+				<a class="nav-link" href="/" @click="logOut">Log out</a>
 			</li>
 			<li class="nav-item">
-				<a class="nav-link" href="/" @click="logOut">Log out</a>
+				<router-link to="/dashboard" class="nav-link">Dashboard</router-link>
 			</li>
 		</ul>
 		</div>
@@ -46,9 +46,6 @@ export default {
 	computed: {
 		loggedOut: function() {
 			return this.$api.user == null
-		},
-		api: function() {
-			return this.$api
 		}
 	},
 	methods: {
