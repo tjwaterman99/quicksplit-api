@@ -1,5 +1,6 @@
 <template>
-	<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+	<nav class="navbar navbar-expand-lg navbar-light">
+		<div class="container">
 		<a class="navbar-brand" href="/">
 			<img src="/logo.png" width="30" height="30" class="d-inline-block align-top" alt="" />
 			Quick Split
@@ -36,6 +37,7 @@
 				<router-link to="/dashboard" class="nav-link">Dashboard</router-link>
 			</li>
 		</ul>
+		</div>
 		</div>
 	</nav>
 </template>
