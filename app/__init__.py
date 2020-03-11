@@ -1,8 +1,9 @@
 import traceback
 import os
 import datetime
+from json import JSONDecodeError
 
-from flask import Flask, current_app, json, make_response, request, g
+from flask import Flask, current_app, json, make_response, request, g, jsonify
 from flask_migrate import Migrate
 from flask_cors import CORS
 from werkzeug.utils import import_string
@@ -67,6 +68,10 @@ def load_user():
     g.token = token
 
 
+def parse_json():
+    request.get_json(force=True, silent=True, cache=True)
+
+
 def shell_context():
     return {
         'db': db,
@@ -112,6 +117,7 @@ def create_app():
 
     app.shell_context_processor(shell_context)
     app.before_request(load_user)
+    app.before_request(parse_json)
 
     app.register_error_handler(Exception, handle_uncaught_exception)
     app.register_error_handler(ApiException, handle_api_exception)

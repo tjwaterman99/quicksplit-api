@@ -65,7 +65,6 @@ export default {
 		this.$api.get('/experiments').then(function(resp) {
 			that.experiments = resp.data.data
 			that.loaded = true
-			console.log(that.loaded)
 		}).catch(function(err) {
 			console.log(err)
 		})

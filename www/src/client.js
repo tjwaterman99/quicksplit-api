@@ -9,10 +9,7 @@ class Client {
 		this.token = Cookies.get(this.tokenKey) || null
 		this.user = null
 		this.axios = axios.create({
-			baseURL: this.baseURL,
-			headers: {
-				'Content-Type': 'application/json'
-			}
+			baseURL: this.baseURL
 		})
 
 		if (this.token != null) {
