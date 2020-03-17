@@ -81,7 +81,11 @@ class UserResource(Resource):
 
     @params('email', 'password')
     def post(self, email, password):
-        return User.create(email, password)
+        user = User.create(email, password)
+        db.session.flush()
+        sess = Session.create(email=email, password=password)
+        session['id'] = str(sess.id)
+        return user
 
 
 class LoginResource(Resource):
