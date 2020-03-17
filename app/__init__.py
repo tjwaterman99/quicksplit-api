@@ -103,8 +103,8 @@ def create_app():
         '*': {
             'origins': [
                 'http://127.0.0.1:8080',
-                'https://*.quicksplit.io',
-                'https://*.netlify.com'
+                r'https://(.*).quicksplit.io',
+                r'https://(.*).netlify.com'
              ]
         }
     })
