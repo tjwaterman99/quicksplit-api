@@ -23,7 +23,7 @@ plans = [
 
     Plan(id=uuid4(), name="team",  price_in_cents=100*1500*10, max_subjects_per_experiment=100000, max_active_experiments=25, schedule_id=annual_schedule_id, public=True, self_serve=True),
 
-    Plan(id=uuid4(), name="custom",  price_in_cents=100 * 1000, max_subjects_per_experiment=500000, max_active_experiments=100, schedule_id=annual_schedule_id, public=True, self_serve=True),
+    Plan(id=uuid4(), name="custom",  price_in_cents=100 * 1000, max_subjects_per_experiment=500000, max_active_experiments=100, schedule_id=annual_schedule_id, public=True, self_serve=False),
 ]
 
 scopes = [
