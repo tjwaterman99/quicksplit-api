@@ -12,7 +12,7 @@ jobs:
       - name: Start docker containers
         run: docker-compose up --detach
       - name: Log container status
-        run: docker-compose ps
+        run: sleep 5 && docker-compose ps
       - name: Seed local containers
         run: docker-compose exec -T web flask seed all
       - name: Display seeds
