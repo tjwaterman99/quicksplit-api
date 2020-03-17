@@ -57,6 +57,11 @@ def email():
 
 
 @pytest.fixture()
+def password():
+    return "password"
+
+
+@pytest.fixture()
 def db(database):
     database.session.begin_nested()
     yield database
@@ -81,8 +86,8 @@ def account(db, stripe_customer_id):
 
 
 @pytest.fixture()
-def user(db, email, account, production_scope):
-    return User.create(email=email, password="password", account=account)
+def user(db, email, account, production_scope, password):
+    return User.create(email=email, password=password, account=account)
 
 
 @pytest.fixture()
@@ -177,6 +182,11 @@ def conversion(db, exposure, production_scope):
     db.session.add(conversion)
     db.session.flush()
     return conversion
+
+
+@pytest.fixture()
+def logged_out_client(db, app):
+    return app.test_client()
 
 
 @pytest.fixture()

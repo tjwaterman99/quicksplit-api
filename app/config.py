@@ -2,6 +2,7 @@ import os
 
 
 class ProductionConfig(object):
+    SECRET_KEY = os.environ['SECRET_KEY']
     DATABASE_URL = os.environ['DATABASE_URL']
     SQLALCHEMY_DATABASE_URI = DATABASE_URL
     SQLALCHEMY_TRACK_MODIFICATIONS = False

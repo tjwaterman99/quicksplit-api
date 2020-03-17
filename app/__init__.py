@@ -2,8 +2,9 @@ import traceback
 import os
 import datetime
 from json import JSONDecodeError
+from uuid import UUID
 
-from flask import Flask, current_app, json, make_response, request, g, jsonify
+from flask import Flask, current_app, json, make_response, request, g, jsonify, session
 from flask_migrate import Migrate
 from flask_cors import CORS
 from werkzeug.utils import import_string
@@ -12,7 +13,7 @@ import stripe
 from app.resources import api
 from app.models import (
     db, Account, User, Token, Experiment, Subject, Exposure, Conversion,
-    Cohort, Scope, PlanSchedule, Order
+    Cohort, Scope, PlanSchedule, Order, Session
 )
 from app.services import ExperimentResultCalculator
 from app.exceptions import ApiException
@@ -50,23 +51,39 @@ def handle_uncaught_exception(exc):
     return make_response(json.dumps(resp), 500)
 
 
-def load_user():
-    token_value = request.headers.get('Authorization')
-    if not token_value:
-        g.user = None
-        g.token = None
-        return
+def load_session():
+    sess = Session.query.get(session['id'])
+    if not sess:
+        raise ApiException(403, "Invalid session id")
+    else:
+        g.user = sess.user
+        g.token = sess.user.admin_token
 
-    # Note that public routes will reject a user with an invalid token. That
-    # seems a bit counter-intuitive, since those routes shouldn't be validating
-    # the token.
+
+def load_token():
+    token_value = request.headers['Authorization']
+    try:
+        UUID(token_value)
+    except ValueError:
+        raise ApiException(403, "Invalid token: not uuid")
     token = Token.query.filter(Token.value==token_value).first()
     if not token:
-        raise ApiException(403, "Permission denied. Invalid token.")
+        raise ApiException(403, "Invalid token")
+    else:
+        g.token = token
+        g.user = token.user
+        g.session = None
 
-    g.user = token.user
-    g.token = token
 
+def load_user():
+    if 'session' in request.cookies:
+        load_session()
+    elif 'Authorization' in request.headers:
+        load_token()
+    else:
+        g.user = None
+        g.token = None
+        g.session = None
 
 def parse_json():
     request.get_json(force=True, silent=True, cache=True)
@@ -100,7 +117,8 @@ def create_app():
     CORS(app, resources={
         '/conversions': {'origins': '*'},
         '/exposures': {'origins': '*'},
-        '*': {'origins': '*'}
+        # TODO: once the new www is deployed, only allow origin 'www.quicksplit.io',
+        '*': {'origins': '*', 'supports_credentials': True}
     })
 
     migrate = Migrate(db)

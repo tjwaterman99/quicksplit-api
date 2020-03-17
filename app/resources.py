@@ -1,12 +1,12 @@
 import datetime as dt
 
-from flask import request, g, current_app, make_response, json
+from flask import request, g, current_app, make_response, json, session
 from flask_restful import Api, Resource
 from funcy import decorator
 
 from app.models import (
     db, Account, User, Token, Experiment, Subject, Conversion, Exposure, Role,
-    Cohort, Scope, Event, Plan, Contact, PaymentMethod
+    Cohort, Scope, Event, Plan, Contact, PaymentMethod, Session
 )
 from app.services import ExperimentResultCalculator
 from app.sql import recent_events
@@ -54,6 +54,23 @@ def params(call, *required, **optional):
 class IndexResource(Resource):
     def get(self):
         return {'healthy': True}
+
+
+class SessionsResource(Resource):
+    @params('email', 'password')
+    def post(self, email, password):
+        sess = Session.create(email=email, password=password)
+        session['id'] = str(sess.id)
+        return sess
+
+    def delete(self):
+        sess = Session.query.get(session['id'])
+        if not sess:
+            raise ApiException(404, "Session not found")
+        db.session.delete(sess)
+        db.session.flush()
+        session.clear()
+        return sess
 
 
 class UserResource(Resource):
@@ -238,3 +255,4 @@ api.add_resource(PlansResource, '/plans')
 api.add_resource(ContactsResource, '/contacts')
 api.add_resource(AccountPaymentSetupResource, '/account/payment-setup')
 api.add_resource(StripeWebhooksResource, '/webhooks/stripe')
+api.add_resource(SessionsResource, '/sessions')

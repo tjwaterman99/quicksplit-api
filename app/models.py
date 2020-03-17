@@ -86,6 +86,31 @@ class EventTrackerMixin(object):
 
 
 @dataclass
+class Session(TimestampMixin, db.Model):
+    id: str
+    user: "User"
+    created_at: str
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False)
+
+    user = db.relationship("User", lazy="joined", uselist=False, backref=db.backref("sessions", lazy="dynamic"))
+
+    @classmethod
+    def create(cls, email, password):
+        user = User.query.filter(User.email==email).first()
+        if not user:
+            raise ApiException(404, "Account not found")
+        if not user.check_password(password):
+            raise ApiException(403, "Invalid password")
+        else:
+            session = cls(user=user)
+            db.session.add(session)
+            db.session.flush()
+            return session
+
+
+@dataclass
 class Contact(TimestampMixin, db.Model):
     id: str
     email: str
