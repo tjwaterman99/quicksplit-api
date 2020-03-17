@@ -131,10 +131,15 @@ class Event(TimestampMixin, db.Model):
 class PlanSchedule(TimestampMixin, db.Model):
     name: str
     interval: dt.timedelta
+    interval_days: int
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = db.Column(db.String(), nullable=False, index=True, unique=True)
     interval = db.Column(INTERVAL, nullable=False, index=True, unique=True)
+
+    @property
+    def interval_days(self):
+        return self.interval.days
 
     __tablename__ = "plan_schedule"
 
@@ -146,6 +151,9 @@ class Plan(TimestampMixin, db.Model):
     price_in_cents: int
     max_subjects_per_experiment: int
     max_active_experiments: int
+    self_serve: bool
+    public: bool
+    schedule: PlanSchedule
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = db.Column(db.String(), nullable=False, index=True)
