@@ -100,10 +100,10 @@ def create_app():
     CORS(app, resources={
         '/conversions': {'origins': '*'},
         '/exposures': {'origins': '*'},
-        '/*': {
+        '*': {
             'origins': [
                 'http://127.0.0.1:8080',
-                'https://www.quicksplit.io',
+                'https://*.quicksplit.io',
                 'https://*.netlify.com'
              ]
         }
