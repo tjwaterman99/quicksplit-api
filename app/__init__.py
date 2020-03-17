@@ -100,13 +100,7 @@ def create_app():
     CORS(app, resources={
         '/conversions': {'origins': '*'},
         '/exposures': {'origins': '*'},
-        '*': {
-            'origins': [
-                'http://127.0.0.1:8080',
-                r'https://(.*).quicksplit.io',
-                r'https://(.*).netlify.com'
-             ]
-        }
+        '*': {'origins': '*'}
     })
 
     migrate = Migrate(db)
