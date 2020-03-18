@@ -64,7 +64,7 @@ def load_session():
         elif 'environment' in request.args:  # ie query params
             environment = request.args['environment']
         else:
-            environment = 'staging'
+            environment = 'production'
 
         # Set token based on environment value
         if environment == "staging":
