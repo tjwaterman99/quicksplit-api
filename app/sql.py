@@ -1,6 +1,7 @@
 recent_events = """
 with recent_exposures as (
 select
+    exposure.id,
     'exposure' as type,
     experiment.name as experiment,
     cohort.name as cohort,
@@ -19,6 +20,7 @@ limit 10),
 
 recent_conversions as (
 select
+    conversion.id,
     'conversion' as type,
     experiment.name as experiment,
     cohort.name as cohort,
@@ -37,10 +39,10 @@ order by conversion.last_seen_at desc
 limit 10),
 
 recent_agg as (
-    select type, experiment, cohort, subject, value, last_seen_at
+    select id, type, experiment, cohort, subject, value, last_seen_at
     from recent_exposures
     union
-    select type, experiment, cohort, subject, value, last_seen_at
+    select id, type, experiment, cohort, subject, value, last_seen_at
     from recent_conversions
 )
 
