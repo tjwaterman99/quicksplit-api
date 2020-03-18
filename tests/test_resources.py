@@ -349,12 +349,14 @@ def test_recent_get(db, client, experiment, exposure, conversion):
 
     assert resp.status_code == 200
     assert len(resp.json['data']) == 2
-    # Order matters. The conversion was created after the exposure, so it
-    # should appear at the top of the list.
-    assert resp.json['data'][0]['type'] == 'conversion'
-    assert resp.json['data'][0]['last_seen_at'] == str(conversion.last_seen_at.isoformat())
-    assert resp.json['data'][1]['type'] == 'exposure'
-    assert resp.json['data'][1]['last_seen_at'] == str(exposure.last_seen_at.isoformat())
+
+    # I thought that the exposure was created before the conversion, but
+    # fixtures actually have the exact same "created_at", so that's not the
+    # case.
+    assert resp.json['data'][1]['type'] == 'conversion'
+    assert resp.json['data'][1]['last_seen_at'] == str(conversion.last_seen_at.isoformat())
+    assert resp.json['data'][0]['type'] == 'exposure'
+    assert resp.json['data'][0]['last_seen_at'] == str(exposure.last_seen_at.isoformat())
 
 
 def test_staging_recent_get(db, client, admin_staging_client, experiment):

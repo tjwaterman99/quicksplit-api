@@ -57,7 +57,16 @@ def load_session():
         raise ApiException(403, "Invalid session id")
     else:
         g.user = sess.user
-        g.token = sess.user.admin_token
+        if request.json and 'environment' in request.json:
+            environment = request.json.pop('environment')
+            if environment == "staging":
+                g.token = g.user.admin_token_staging
+            elif environment == "production":
+                g.token = g.user.admin_token
+            else:
+                raise ApiException(403, f"Invalid environment: {environment}")
+        else:
+            g.token = sess.user.admin_token
 
 
 def load_token():
@@ -72,7 +81,6 @@ def load_token():
     else:
         g.token = token
         g.user = token.user
-        g.session = None
 
 
 def load_user():
@@ -83,7 +91,7 @@ def load_user():
     else:
         g.user = None
         g.token = None
-        g.session = None
+
 
 def parse_json():
     request.get_json(force=True, silent=True, cache=True)
@@ -128,8 +136,8 @@ def create_app():
     api.init_app(app)
 
     app.shell_context_processor(shell_context)
-    app.before_request(load_user)
     app.before_request(parse_json)
+    app.before_request(load_user)
 
     app.register_error_handler(Exception, handle_uncaught_exception)
     app.register_error_handler(ApiException, handle_api_exception)
