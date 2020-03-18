@@ -57,16 +57,22 @@ def load_session():
         raise ApiException(403, "Invalid session id")
     else:
         g.user = sess.user
+
+        # Pull environment from request body or query params
         if request.json and 'environment' in request.json:
             environment = request.json.pop('environment')
-            if environment == "staging":
-                g.token = g.user.admin_token_staging
-            elif environment == "production":
-                g.token = g.user.admin_token
-            else:
-                raise ApiException(403, f"Invalid environment: {environment}")
+        elif 'environment' in request.args:  # ie query params
+            environment = request.args['environment']
         else:
-            g.token = sess.user.admin_token
+            environment = 'staging'
+
+        # Set token based on environment value
+        if environment == "staging":
+            g.token = g.user.admin_token_staging
+        elif environment == "production":
+            g.token = g.user.admin_token
+        else:
+            raise ApiException(403, f"Invalid environment: {environment}")
 
 
 def load_token():
