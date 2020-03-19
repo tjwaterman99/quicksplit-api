@@ -1,11 +1,17 @@
+from pprint import pprint
+
+from flask import current_app
 from flask.cli import AppGroup
 from click import argument, option
 
-from app.models import db
+from app.models import db, ExposureRollup
 from app.seeds import plans, roles, scopes, plan_schedules
+from app.sql import exposures_summary
 from migrations import data_migrations
 
+
 seed = AppGroup(name="seed", help="Commands to seed the database")
+rollup = AppGroup(name="rollup", help="Commands to run daily rollups")
 
 
 @seed.command()
@@ -40,3 +46,25 @@ def revision(_revision, up, down):
     except AttributeError:
         raise AttributeError(f"No migration command found for revision {_revision}_{end}")
     return command()
+
+
+@rollup.command()
+@argument('date')
+def exposures(date):
+    """
+    Aggregate exposures for each experiment and environment, per day
+    """
+
+    query = exposures_summary.format(date=date)
+    results = db.session.execute(query).fetchall()
+    results_dict = list(dict(r) for r in results)
+    db.session.bulk_insert_mappings(ExposureRollup, results_dict)
+    if current_app.testing:
+        db.session.flush()
+        print("Not commiting during tests")
+    else:
+        db.session.commit()
+
+    affected_users = set(d['user_id'] for d in results_dict)
+    num_affected_users = len(affected_users)
+    print(f"Ran rollup for {date}: {num_affected_users} affected users: {affected_users}")

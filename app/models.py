@@ -761,3 +761,31 @@ class Conversion(TimestampMixin, db.Model):
         db.session.add_all([experiment, subject, conversion])
         db.session.flush()
         return conversion
+
+
+@dataclass
+class ExposureRollup(TimestampMixin, db.Model):
+    day: str
+    user_id: str
+    account_id: str
+    experiment_id: str
+    experiment_name: str
+    scope_id: str
+    exposures: int
+    conversions: int
+
+    # No foreign keys in case a dependant object gets deleted before the job
+    # can finish
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    day = db.Column(db.Date(), nullable=False, index=True)
+    user_id = db.Column(UUID(as_uuid=True), nullable=False, index=True)
+    account_id = db.Column(UUID(as_uuid=True), nullable=False, index=True)
+    experiment_id = db.Column(UUID(as_uuid=True), nullable=False, index=True)
+    experiment_name = db.Column(db.String(), nullable=False)
+    scope_id = db.Column(UUID(as_uuid=True), nullable=False, index=True)
+    exposures = db.Column(db.Integer(), nullable=False)
+    conversions = db.Column(db.Integer(), nullable=False)
+
+    __table_args__ = (db.UniqueConstraint('day', 'experiment_id', 'scope_id'), )
+
+    user = db.relationship("User", primaryjoin="User.id==ExposureRollup.user_id", foreign_keys=[user_id], backref=db.backref('exposures_rollups', lazy="dynamic"))

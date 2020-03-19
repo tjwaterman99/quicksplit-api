@@ -17,7 +17,7 @@ from app.models import (
 )
 from app.services import ExperimentResultCalculator
 from app.exceptions import ApiException
-from app.commands import seed
+from app.commands import seed, rollup
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -149,6 +149,7 @@ def create_app():
     app.register_error_handler(ApiException, handle_api_exception)
 
     app.cli.add_command(seed)
+    app.cli.add_command(rollup)
 
     app.json_encoder = CustomJSONEncoder
 

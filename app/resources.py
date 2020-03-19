@@ -6,7 +6,7 @@ from funcy import decorator
 
 from app.models import (
     db, Account, User, Token, Experiment, Subject, Conversion, Exposure, Role,
-    Cohort, Scope, Event, Plan, Contact, PaymentMethod, Session
+    Cohort, Scope, Event, Plan, Contact, PaymentMethod, Session, ExposureRollup
 )
 from app.services import ExperimentResultCalculator
 from app.sql import recent_events
@@ -185,6 +185,28 @@ class RecentResource(Resource):
         return [dict(r) for r in db.session.execute(re).fetchall()]
 
 
+class SummaryExposuresResource(Resource):
+
+    @protected()
+    def get(self):
+        start_date = request.args.get('start_date') or str(dt.datetime.now().date())
+        end_date = request.args.get('end_date') or str((dt.datetime.now() - dt.timedelta(days=7)).date())
+        try:
+            start = dt.datetime.strptime(start_date, '%Y-%m-%d').date()
+            end = dt.datetime.strptime(end_date, '%Y-%m-%d').date()
+        except ValueError:
+            raise ApiException(422, f"Invalid dates: [{start_date}, {end_date}]")
+
+        exposures_rollups = g.user.exposures_rollups.filter(
+            ExposureRollup.day < end
+        ).filter(
+            ExposureRollup.day >= start
+        ).filter(
+            ExposureRollup.scope_id==g.token.scope.id
+        ).all()
+        return exposures_rollups
+
+
 class EventsResource(Resource):
 
     @params("name", user_id=None, data=None)
@@ -260,3 +282,4 @@ api.add_resource(ContactsResource, '/contacts')
 api.add_resource(AccountPaymentSetupResource, '/account/payment-setup')
 api.add_resource(StripeWebhooksResource, '/webhooks/stripe')
 api.add_resource(SessionsResource, '/sessions')
+api.add_resource(SummaryExposuresResource, '/summaries/exposures')

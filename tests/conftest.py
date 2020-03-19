@@ -9,7 +9,7 @@ import sqlalchemy
 from app import create_app
 from app.models import (
     db as _db, Role, Plan, Account, User, Subject, Experiment, Exposure,
-    Conversion, Token, Cohort, Scope, PlanSchedule
+    Conversion, Token, Cohort, Scope, PlanSchedule, ExposureRollup
 )
 from app.seeds import plans, roles, scopes, plan_schedules
 
@@ -168,7 +168,7 @@ def exposure(db, subject, experiment, cohort, production_scope):
 
 @pytest.fixture()
 def exposure_staging(db, subject_staging, experiment, cohort, staging_scope):
-    exposure = Exposure(subject=subject_staging, experiment=experiment, cohort=cohort, scope=staging_scope)
+    exposure = Exposure(subject=subject_staging, experiment=experiment, cohort=cohort, scope=staging_scope, last_seen_at=dt.datetime.now())
     experiment.subjects_counter_staging += 1
     db.session.add(exposure)
     db.session.add(experiment)
@@ -178,10 +178,27 @@ def exposure_staging(db, subject_staging, experiment, cohort, staging_scope):
 
 @pytest.fixture()
 def conversion(db, exposure, production_scope):
-    conversion = Conversion(exposure=exposure, value=30.0, scope=production_scope)
+    conversion = Conversion(exposure=exposure, value=30.0, scope=production_scope, last_seen_at=dt.datetime.now())
     db.session.add(conversion)
     db.session.flush()
     return conversion
+
+
+@pytest.fixture()
+def exposures_rollup(db, exposure):
+    rollup = ExposureRollup(
+        day=exposure.last_seen_at.date(),
+        user_id=exposure.experiment.user_id,
+        account_id=exposure.experiment.user.account_id,
+        experiment_id=exposure.experiment.id,
+        experiment_name=exposure.experiment.name,
+        scope_id=exposure.scope.id,
+        exposures=1,
+        conversions=0
+    )
+    db.session.add(rollup)
+    db.session.flush()
+    return rollup
 
 
 @pytest.fixture()
