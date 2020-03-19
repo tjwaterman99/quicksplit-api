@@ -28,6 +28,8 @@ class CustomJSONEncoder(json.JSONEncoder):
       return str(o)
     elif type(o) == datetime.datetime:
       return o.isoformat()
+    elif type(o) == datetime.date:
+      return str(o)
     else:
       return super().default(o)
 

@@ -189,8 +189,8 @@ class SummaryExposuresResource(Resource):
 
     @protected()
     def get(self):
-        start_date = request.args.get('start_date') or str(dt.datetime.now().date())
-        end_date = request.args.get('end_date') or str((dt.datetime.now() - dt.timedelta(days=7)).date())
+        end_date = request.args.get('end_date') or str(dt.datetime.now().date())
+        start_date = request.args.get('start_date') or str((dt.datetime.now() - dt.timedelta(days=7)).date())
         try:
             start = dt.datetime.strptime(start_date, '%Y-%m-%d').date()
             end = dt.datetime.strptime(end_date, '%Y-%m-%d').date()
