@@ -1,5 +1,5 @@
 from typing import Dict
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 import uuid
 import datetime as dt
 
@@ -12,9 +12,12 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash, check_password_hash
 import stripe
 
-from app.exceptions import ApiException
+from app.encoders import CustomJSONEncoder
 
-db = SQLAlchemy()
+db = SQLAlchemy(engine_options={'json_serializer': CustomJSONEncoder().encode})
+
+from app.exceptions import ApiException
+from app.services import ExperimentResultCalculator
 
 
 class TimestampMixin(object):
@@ -568,16 +571,52 @@ class Experiment(EventTrackerMixin, TimestampMixin, db.Model):
         db.session.flush()
 
 
-# @dataclass
-# class ExperimentResult(TimestampMixin, db.Model):
-#     id: str
-#     experiment_id: str
-#     experiment_name: str
-#     version: str  # I expect the exact schema of the reports will change
-#     fields: Dict
-#
-#     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+@dataclass(init=False)
+class ExperimentResult(TimestampMixin, db.Model):
+    id: str
+    experiment_id: str
+    version: str
+    fields: Dict
+    ran_at: str
+    ran: bool
 
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), nullable=False)
+    scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
+    version = db.Column(db.String(10))
+    fields = db.Column(JSONB())
+    ran_at = db.Column(db.DateTime(timezone=True), index=True)
+
+    experiment = db.relationship('Experiment', lazy='joined', backref=db.backref('results', lazy='dynamic'))
+    scope = db.relationship('Scope', lazy='joined')
+
+    @classmethod
+    def create(cls, experiment, scope):
+        experiment_result = cls(experiment=experiment, scope=scope)
+        db.session.add(experiment_result)
+        db.session.flush()
+        return experiment_result
+
+    @property
+    def ran(self):
+        return self.ran_at is not None
+
+    def run(self):
+        erc = ExperimentResultCalculator(experiment=self.experiment, scope=self.scope)
+        erc.run()
+        self.fields = asdict(erc)
+        self.version = erc.version
+        self.ran_at = dt.datetime.now()
+        db.session.add(self)
+        db.session.flush()
+        return self
+
+
+# post request comes in
+# experiment_result.create gets called
+# v1: experiment_result.run gets called in the route
+# v2: experiment result creator job gets queued with the experiment_result id. That job relaods the experiment result and calls "run"
+# experiment_result gets returned
 
 @dataclass
 class Subject(EventTrackerMixin, TimestampMixin, db.Model):

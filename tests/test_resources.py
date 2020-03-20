@@ -246,7 +246,7 @@ def test_results_get(db, client, experiment, exposure):
     assert resp.json['data']['experiment']['name'] == str(experiment.name)
     assert resp.json['data']['scope_name'] == 'production'
     assert resp.json['data']['subjects'] == 1
-    assert resp.json['data']['significant'] == None
+    assert resp.json['data']['significant'] == False
     assert len(resp.json['data']['table']) == 1
 
 

@@ -7,14 +7,16 @@ from statsmodels.formula.api import ols
 from flask import g
 import numpy as np
 
-from app.models import db, Experiment, Scope
+from app.models import db
 from app.sql import experiment_loader_query
 
 
-@dataclass
+@dataclass(init=False)
 class ExperimentResultCalculator(object):
-    experiment: Experiment
-    scope: Scope
+    version: str = '1.0'
+
+    experiment: 'Experiment'
+    scope: 'Scope'
     experiment_name: str
     scope_name: str
     table: List[Dict]
@@ -100,6 +102,8 @@ class ExperimentResultCalculator(object):
     def significant(self):
         if self.pvalue:
             return self.pvalue < 0.1
+        else:
+            return False
 
     @property
     def subjects(self):

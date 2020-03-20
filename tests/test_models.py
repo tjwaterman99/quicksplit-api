@@ -1,7 +1,8 @@
 import pytest
 
-from app.models import Account, User, Experiment, Subject, Exposure, Conversion, Token, Role
+from app.models import Account, User, Experiment, Subject, Exposure, Conversion, Token, Role, ExperimentResult
 from app.exceptions import ApiException
+from app.services import ExperimentResultCalculator
 
 
 def test_user_create(db, email, production_scope):
@@ -232,3 +233,24 @@ def test_conversion_create_staging(db, app, user, experiment, subject_staging, e
 
 def test_free_plan_has_no_schedule(user):
     assert user.account.plan.schedule == None
+
+
+def test_experiment_result_create(db, experiment, production_scope):
+    experiment_result = ExperimentResult.create(experiment=experiment, scope=production_scope)
+    assert experiment_result.ran_at == None
+    assert experiment_result.ran == False
+    assert experiment_result.version == None
+
+    assert experiment_result in experiment.results.all()
+
+
+def test_experiment_result_run(db, experiment, production_scope, exposure, conversion):
+    experiment_result = ExperimentResult.create(experiment=experiment, scope=production_scope).run()
+    assert experiment_result.ran_at != None
+    assert experiment_result.ran == True
+    assert experiment_result.version == ExperimentResultCalculator.version
+    assert experiment_result.fields['scope']['id'] == production_scope.id
+    assert experiment_result.fields['experiment']['id'] == experiment.id
+    assert experiment_result.fields['experiment_name'] == experiment.name
+    assert experiment_result.fields['scope_name'] == production_scope.name
+    assert experiment_result in experiment.results.all()
