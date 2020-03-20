@@ -78,6 +78,10 @@ docker-compose exec web pytest tests
 
 ## Deploying
 
+This repository manages releases for both the web api and the CLI.
+
+### API releases
+
 Pushes to master will automatically deploy the `www` build to Netlify and the `api` to Heroku. The Heroku deploy will also automatically run the schema migrations, but will not automatically run any data migrations.
 
 Use the `flask db seed` command to run a specific data migration.
@@ -87,3 +91,9 @@ heroku run flask db seed $REVISION
 ```
 
 Note that it can be dangerous to run multiple schema migrations (ie pushes to master) if the later schema migrations assume that a data migration has occurred.
+
+### CLI releases
+
+All releases are completely managed through the Github release feature.
+
+Creating a new release tag will trigger a Github action and deploy the CLI to PyPI. The version of the release on PyPI will be the same as the created tag, since the `setup.py` file uses that value for setting the package's version.
