@@ -579,6 +579,7 @@ class ExperimentResult(TimestampMixin, db.Model):
     fields: Dict
     ran_at: str
     ran: bool
+    experiment_name: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), nullable=False)
@@ -598,6 +599,10 @@ class ExperimentResult(TimestampMixin, db.Model):
         db.session.add(experiment_result)
         db.session.flush()
         return experiment_result
+
+    @property
+    def experiment_name(self):
+        return self.experiment.name
 
     @property
     def ran(self):
