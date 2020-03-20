@@ -582,17 +582,19 @@ class ExperimentResult(TimestampMixin, db.Model):
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), nullable=False)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False)
     scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
     version = db.Column(db.String(10))
     fields = db.Column(JSONB())
     ran_at = db.Column(db.DateTime(timezone=True), index=True)
 
     experiment = db.relationship('Experiment', lazy='joined', backref=db.backref('results', lazy='dynamic'))
+    user = db.relationship('User', lazy="joined", backref=db.backref('experiment_results', lazy="dynamic"))
     scope = db.relationship('Scope', lazy='joined')
 
     @classmethod
     def create(cls, experiment, scope):
-        experiment_result = cls(experiment=experiment, scope=scope)
+        experiment_result = cls(experiment=experiment, scope=scope, user=experiment.user)
         db.session.add(experiment_result)
         db.session.flush()
         return experiment_result

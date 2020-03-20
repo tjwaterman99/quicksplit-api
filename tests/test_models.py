@@ -237,6 +237,7 @@ def test_free_plan_has_no_schedule(user):
 
 def test_experiment_result_create(db, experiment, production_scope):
     experiment_result = ExperimentResult.create(experiment=experiment, scope=production_scope)
+    assert experiment_result.user == experiment.user
     assert experiment_result.ran_at == None
     assert experiment_result.ran == False
     assert experiment_result.version == None
