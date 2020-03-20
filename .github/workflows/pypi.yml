@@ -30,7 +30,7 @@ jobs:
         env:
           QUICKSPLIT_API_URL: https://api.quicksplit.io
         run: |
-          sleep 60  # Wait for PyPI to publish release
+          sleep 120  # Wait for PyPI to publish release
           pip --version
           pip install quicksplit==$RELEASE_VERSION pytest
           pip list
