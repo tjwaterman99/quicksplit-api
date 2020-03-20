@@ -66,7 +66,7 @@ join cohort on exposure.cohort_id = cohort.id
 join scope on exposure.scope_id = scope.id
 left join conversion on conversion.exposure_id = exposure.id
 where experiment.id = '{experiment_id}'::uuid
-    and scope.name = '{scope_name}'
+    and scope.id = '{scope_id}'
 """
 
 exposures_summary = """

@@ -1,3 +1,4 @@
+from typing import Dict
 from dataclasses import dataclass
 import uuid
 import datetime as dt
@@ -565,6 +566,17 @@ class Experiment(EventTrackerMixin, TimestampMixin, db.Model):
         self.active = False
         db.session.add(self)
         db.session.flush()
+
+
+# @dataclass
+# class ExperimentResult(TimestampMixin, db.Model):
+#     id: str
+#     experiment_id: str
+#     experiment_name: str
+#     version: str  # I expect the exact schema of the reports will change
+#     fields: Dict
+#
+#     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
 
 @dataclass

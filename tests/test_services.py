@@ -30,28 +30,28 @@ def setup_experiment(client, experiment, exposures_count):
             raise AttributeError
 
 
-def test_experiment_result_calculator_50_samples(db, client, experiment):
+def test_experiment_result_calculator_50_samples(db, client, experiment, production_scope):
     exposures_count = 50
     setup_experiment(client, experiment, exposures_count)
-    erc = ExperimentResultCalculator(experiment)
+    erc = ExperimentResultCalculator(experiment, scope=production_scope)
     erc.run()
     assert erc.subjects == exposures_count
     assert erc.pvalue is not None
 
 
-def test_experiment_result_calculator_1_sample(db, client, experiment):
+def test_experiment_result_calculator_1_sample(db, client, experiment, production_scope):
     exposures_count = 1
     setup_experiment(client, experiment, exposures_count)
-    erc = ExperimentResultCalculator(experiment)
+    erc = ExperimentResultCalculator(experiment, scope=production_scope)
     erc.run()
     assert erc.subjects == exposures_count
     assert erc.pvalue is None
 
 
-def test_experiment_result_calculator_5_samples(db, client, experiment):
+def test_experiment_result_calculator_5_samples(db, client, experiment, production_scope):
     exposures_count = 5
     setup_experiment(client, experiment, exposures_count)
-    erc = ExperimentResultCalculator(experiment)
+    erc = ExperimentResultCalculator(experiment, scope=production_scope)
     erc.run()
     assert erc.subjects == exposures_count
     assert erc.pvalue is not None

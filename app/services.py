@@ -7,23 +7,26 @@ from statsmodels.formula.api import ols
 from flask import g
 import numpy as np
 
-from app.models import db
+from app.models import db, Experiment, Scope
 from app.sql import experiment_loader_query
 
 
 @dataclass
 class ExperimentResultCalculator(object):
-    experiment: str
+    experiment: Experiment
+    scope: Scope
+    experiment_name: str
     scope_name: str
     table: List[Dict]
+    summary: str
 
     subjects: int
     significant: bool
 
 
-    def __init__(self, experiment, scope_name="production"):
+    def __init__(self, experiment, scope):
         self.experiment = experiment
-        self.scope_name = scope_name
+        self.scope = scope
 
         self.data = None
         self.df = None
@@ -31,7 +34,7 @@ class ExperimentResultCalculator(object):
 
     def load_data(self):
         if self.data is None:
-            query = experiment_loader_query.format(experiment_id=self.experiment.id, scope_name=self.scope_name)
+            query = experiment_loader_query.format(experiment_id=self.experiment.id, scope_id=self.scope.id)
             self.data = pd.DataFrame(db.session.execute(query))
             self.data.columns = ['name', 'subject', 'cohort', 'converted', 'conversion_value']
         return self.data
@@ -56,10 +59,19 @@ class ExperimentResultCalculator(object):
         self.load_model()
         self.loaded = True
 
+    @property
+    def scope_name(self):
+        return self.scope.name
+
+    @property
+    def experiment_name(self):
+        return self.experiment.name
+
+    @property
     def summary(self):
         if not self.loaded:
             self.run()
-        return self.model.summary()
+        return str(self.model.summary())
 
     @property
     def table(self):

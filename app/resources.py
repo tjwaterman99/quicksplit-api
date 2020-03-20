@@ -140,7 +140,7 @@ class ResultsResource(Resource):
             raise ApiException(404, "Experiment does not exist")
         if experiment.subjects_counter == 0:
             raise ApiException(400, "Experiment has not collected any data")
-        erc = ExperimentResultCalculator(experiment, scope_name=g.token.scope.name)
+        erc = ExperimentResultCalculator(experiment, scope=g.token.scope)
         erc.run()
         return erc
 
