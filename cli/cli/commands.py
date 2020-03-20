@@ -197,7 +197,7 @@ def stop(ctx, experiment):
 @click.pass_context
 def results(ctx, experiment, staging):
     """
-    Print the results of an experimence
+    Print the results of an experiment
     """
 
     ctx.obj.track(name="results", data={
@@ -207,19 +207,19 @@ def results(ctx, experiment, staging):
     if staging:
         environment = "staging"
         with StagingClient(ctx.obj) as client:
-            resp = client.get('/results', json={'experiment': experiment})
+            resp = client.post('/results', json={'experiment': experiment})
     else:
         environment = "production"
-        resp = ctx.obj.get('/results', json={'experiment': experiment})
+        resp = ctx.obj.post('/results', json={'experiment': experiment})
     if ResponseErrorHandler(resp).ok:
         data = resp.json()['data']
-        table = data['table']
+        table = data['fields']['table']
         Printer(
             table,
             order=['cohort', 'subjects', 'conversion rate', '95% Conf. Interval'],
             empty_data_message=f"No {environment} data collected for experiment {experiment} yet."
         ).echo()
-        if data['significant']:
+        if data['fields']['significant']:
             print(
                 "Congratulations! Your test is statistically significant."
                 "You can be confident that the difference in means between"

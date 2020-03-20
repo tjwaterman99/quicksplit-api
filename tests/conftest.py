@@ -9,7 +9,7 @@ import sqlalchemy
 from app import create_app
 from app.models import (
     db as _db, Role, Plan, Account, User, Subject, Experiment, Exposure,
-    Conversion, Token, Cohort, Scope, PlanSchedule, ExposureRollup
+    Conversion, Token, Cohort, Scope, PlanSchedule, ExposureRollup, ExperimentResult
 )
 from app.seeds import plans, roles, scopes, plan_schedules
 
@@ -199,6 +199,14 @@ def exposures_rollup(db, exposure):
     db.session.add(rollup)
     db.session.flush()
     return rollup
+
+
+@pytest.fixture()
+def experiment_result(db, user, experiment, production_scope, exposure, conversion):
+    experiment_result = ExperimentResult(scope=production_scope, experiment=experiment, user=user)
+    db.session.add(experiment_result)
+    db.session.flush()
+    return experiment_result
 
 
 @pytest.fixture()

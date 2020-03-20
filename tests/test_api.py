@@ -174,11 +174,20 @@ def test_activation_post(client, experiment_name):
     assert resp.json()['data']['active'] == True
 
 
-def test_results_get(client, experiment_name):
-    resp = client.get('/results',  data={
+def test_results_get_before_result_create(client, experiment_name):
+    resp = client.get('/results')
+    assert resp.status_code == 200
+    assert resp.json()['data'] == []
+
+
+def test_results_post(client, experiment_name, cohort_name):
+    resp = client.post('/results', data={
         'experiment': experiment_name
     })
     assert resp.status_code == 200
+    assert resp.json()['data']['ran'] == True
+    assert resp.json()['data']['fields']['table'][0]['cohort'] == cohort_name
+    assert resp.json()['data']['fields']['summary'] is not None
 
 
 def test_logging_out(client):

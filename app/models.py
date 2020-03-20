@@ -614,12 +614,6 @@ class ExperimentResult(TimestampMixin, db.Model):
         return self
 
 
-# post request comes in
-# experiment_result.create gets called
-# v1: experiment_result.run gets called in the route
-# v2: experiment result creator job gets queued with the experiment_result id. That job relaods the experiment result and calls "run"
-# experiment_result gets returned
-
 @dataclass
 class Subject(EventTrackerMixin, TimestampMixin, db.Model):
     subject_id: str

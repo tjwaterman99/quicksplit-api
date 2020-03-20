@@ -238,16 +238,25 @@ def test_conversions_post_inactive_experiment(db, client, experiment, exposure, 
     assert exposure.conversion.value == conversion.value
 
 
-def test_results_get(db, client, experiment, exposure):
-    resp = client.get('/results', json={
-        'experiment': experiment.name
-    })
+def test_results_get(db, client, experiment, exposure, conversion, experiment_result):
+    resp = client.get('/results')
     assert resp.status_code == 200
-    assert resp.json['data']['experiment']['name'] == str(experiment.name)
-    assert resp.json['data']['scope_name'] == 'production'
-    assert resp.json['data']['subjects'] == 1
-    assert resp.json['data']['significant'] == False
-    assert len(resp.json['data']['table']) == 1
+    assert len(resp.json['data']) == 1
+    experiment_result_json = resp.json['data'][0]
+    assert experiment_result_json['id'] == str(experiment_result.id)
+    assert experiment_result_json['ran'] == False
+    assert experiment_result_json['ran_at'] == None
+
+
+def test_results_get_ran_experiment_result(db, client, experiment, exposure, conversion, experiment_result):
+    ran_experiment_result = experiment_result.run()
+    resp = client.get('/results')
+    assert resp.status_code == 200
+    assert len(resp.json['data']) == 1
+    experiment_result_json = resp.json['data'][0]
+    assert experiment_result_json['id'] == str(experiment_result.id)
+    assert experiment_result_json['ran'] == True
+    assert experiment_result_json['ran_at'] != None
 
 
 def test_activation_resources(db, client, experiment):

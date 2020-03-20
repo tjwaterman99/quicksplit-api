@@ -6,7 +6,8 @@ from funcy import decorator
 
 from app.models import (
     db, Account, User, Token, Experiment, Subject, Conversion, Exposure, Role,
-    Cohort, Scope, Event, Plan, Contact, PaymentMethod, Session, ExposureRollup
+    Cohort, Scope, Event, Plan, Contact, PaymentMethod, Session, ExposureRollup,
+    ExperimentResult
 )
 from app.services import ExperimentResultCalculator
 from app.sql import recent_events
@@ -133,16 +134,17 @@ class ConversionsResource(Resource):
 class ResultsResource(Resource):
 
     @protected()
+    def get(self):
+        return g.user.experiment_results.all()
+
+    @protected()
     @params('experiment')
-    def get(self, experiment):
+    def post(self, experiment):
         experiment = g.user.experiments.filter(Experiment.name==experiment).first()
         if not experiment:
             raise ApiException(404, "Experiment does not exist")
-        if experiment.subjects_counter == 0:
-            raise ApiException(400, "Experiment has not collected any data")
-        erc = ExperimentResultCalculator(experiment, scope=g.token.scope)
-        erc.run()
-        return erc
+        result = ExperimentResult.create(experiment=experiment, scope=g.token.scope).run()
+        return result
 
 
 class ActivateResource(Resource):
