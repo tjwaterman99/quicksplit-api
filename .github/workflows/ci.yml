@@ -1,8 +1,8 @@
 name: CI
 on: [push]
 jobs:
-  deploy-staging:
-    name: Deploy Staging
+  test:
+    name: Test
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -13,6 +13,10 @@ jobs:
           POSTGRES_DB: quicksplit-dev
         ports:
           - '5432:5432'
+      redis:
+        image: redis
+        ports:
+          - '6379:6379'
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
