@@ -131,11 +131,11 @@ class Contact(TimestampMixin, db.Model):
 
     @classmethod
     def create(cls, email, subject, message):
-        if g.token:
+        if 'token' in g:
             user = g.token.user
         else:
-            user = User.query.filter(User.email==email).first()
-        contact = cls(user=user, email=email, subject=subject, message=message)
+            user = None
+        contact = cls(user=None, email=email, subject=subject, message=message)
         db.session.add(contact)
         db.session.flush()
         return contact

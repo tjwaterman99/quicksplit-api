@@ -13,6 +13,7 @@ from app.models import (
 from app.services import ExperimentResultCalculator
 from app.sql import recent_events
 from app.exceptions import ApiException
+from app.proxies import worker, redis
 
 
 api = Api()
@@ -254,7 +255,12 @@ class ContactsResource(Resource):
 
         if missing_fields:
             raise ApiException(401, f"Please include the following information: {missing_fields}")
-        return Contact.create(email=email, subject=subject, message=message)
+        job = worker.enqueue(Contact.create, kwargs={
+            'email': email,
+            'subject': subject,
+            'message': message
+        })
+        return {'job': job}
 
 
 class AccountPaymentSetupResource(Resource):

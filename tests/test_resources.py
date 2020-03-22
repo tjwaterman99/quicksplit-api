@@ -443,10 +443,4 @@ def test_contacts_resource_post(db, client, user):
         'subject':  "hello world"
     })
     assert resp.status_code == 200
-    assert resp.json['data']['email'] == 'tester'
-
-    contact = Contact.query.first()
-    assert contact.user == user
-    assert contact.email == "tester"
-    assert contact.message
-    assert contact.subject
+    assert resp.json['data']['job']['id'] is not None

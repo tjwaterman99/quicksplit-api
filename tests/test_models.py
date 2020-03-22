@@ -1,6 +1,9 @@
 import pytest
 
-from app.models import Account, User, Experiment, Subject, Exposure, Conversion, Token, Role, ExperimentResult
+from app.models import (
+    Account, User, Experiment, Subject, Exposure, Conversion, Token, Role,
+    ExperimentResult, Contact
+)
 from app.exceptions import ApiException
 from app.services import ExperimentResultCalculator
 
@@ -255,3 +258,8 @@ def test_experiment_result_run(db, experiment, production_scope, exposure, conve
     assert experiment_result.fields['experiment_name'] == experiment.name
     assert experiment_result.fields['scope_name'] == production_scope.name
     assert experiment_result in experiment.results.all()
+
+
+def test_contact_create(db, user):
+    contact = Contact.create(email="tester@gmail.com", subject="test", message="message")
+    assert id is not None

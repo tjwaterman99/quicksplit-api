@@ -3,6 +3,8 @@ from pprint import pprint
 from flask import current_app
 from flask.cli import AppGroup
 from click import argument, option
+from rq import Worker, Connection
+import redis
 
 from app.models import db, ExposureRollup
 from app.seeds import plans, roles, scopes, plan_schedules
@@ -12,6 +14,17 @@ from migrations import data_migrations
 
 seed = AppGroup(name="seed", help="Commands to seed the database")
 rollup = AppGroup(name="rollup", help="Commands to run daily rollups")
+worker = AppGroup(name="worker", help="Commands to manage the redis-queue worker")
+
+
+
+@worker.command("run")
+def run_worker():
+    redis_url = current_app.config["REDIS_URL"]
+    redis_connection = redis.from_url(redis_url)
+    with Connection(redis_connection):
+        worker = Worker(current_app.config["WORKER_QUEUES"])
+        worker.work()
 
 
 @seed.command()

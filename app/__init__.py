@@ -9,6 +9,7 @@ os.environ.setdefault('FLASK_APP', 'app')
 os.environ.setdefault('FLASK_ENV', 'development')
 os.environ.setdefault('PYTHONPATH', '/')
 os.environ.setdefault('DATABASE_URL', 'postgresql://quicksplit:notsecret@127.0.0.1:5432/quicksplit-dev')
+os.environ.setdefault('REDIS_URL', 'redis://127.0.0.1:6379/0')
 os.environ.setdefault('QUICKSPLIT_API_URL', 'http://127.0.0.1:5000')
 os.environ.setdefault('HEROKU_RELEASE_CREATED_AT', str(datetime.datetime.now()))
 os.environ.setdefault('HEROKU_RELEASE_VERSION', 'development')
@@ -22,7 +23,9 @@ os.environ.setdefault('STRIPE_TEST_SECRET_KEY', 'sk_test_InjhthRyfgYjrOXULoSylt4
 os.environ.setdefault('STRIPE_PRODUCTION_PUBLISHABLE_KEY', 'pk_test_vs6w4emCv9szUa8mJyeXKTey00IV5800C2')
 os.environ.setdefault('STRIPE_PRODUCTION_SECRET_KEY', 'sk_test_InjhthRyfgYjrOXULoSylt4g009H6voKLf')
 
-from flask import Flask, current_app, json, make_response, request, g, jsonify, session
+from flask import (
+    Flask, current_app, json, make_response, request, g, jsonify, session
+)
 from flask_migrate import Migrate
 from flask_cors import CORS
 from werkzeug.utils import import_string
@@ -35,7 +38,7 @@ from app.models import (
 )
 from app.services import ExperimentResultCalculator
 from app.exceptions import ApiException
-from app.commands import seed, rollup
+from app.commands import seed, rollup, worker
 from app.encoders import CustomJSONEncoder
 
 
@@ -158,5 +161,6 @@ def create_app():
 
     app.cli.add_command(seed)
     app.cli.add_command(rollup)
+    app.cli.add_command(worker)
 
     return app
