@@ -14,15 +14,12 @@ from app.models import (
 from app.seeds import plans, roles, scopes, plan_schedules
 
 
-os.environ.setdefault('QUICKSPLIT_API_URL', 'http://web:5000')
-
-
 @pytest.fixture(scope='session')
 def dbconn():
     engine = sqlalchemy.engine.create_engine(os.environ['DATABASE_URL'])
     conn = engine.connect()
-    conn.execution_options(isolation_level="AUTOCOMMIT").execute('drop database if exists testing;')
-    conn.execution_options(isolation_level="AUTOCOMMIT").execute('create database testing;')
+    conn.execution_options(isolation_level="AUTOCOMMIT").execute('drop database if exists "quicksplit-testing";')
+    conn.execution_options(isolation_level="AUTOCOMMIT").execute('create database "quicksplit-testing";')
     return dbconn
 
 

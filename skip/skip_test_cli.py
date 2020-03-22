@@ -18,8 +18,6 @@ import json
 
 from cli.printers import Printer
 
-os.environ.setdefault('QUICKSPLIT_API_URL', 'http://web:5000')
-
 
 @pytest.fixture(scope='module')
 def email():

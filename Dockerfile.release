@@ -1,2 +1,0 @@
-FROM quicksplit_web
-CMD flask db upgrade

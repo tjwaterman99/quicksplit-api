@@ -3,6 +3,22 @@ import os
 import datetime
 from uuid import UUID
 
+os.environ.setdefault('PORT', '5000')
+os.environ.setdefault('SECRET_KEY', 'notsecret')
+os.environ.setdefault('FLASK_APP', 'app')
+os.environ.setdefault('FLASK_ENV', 'development')
+os.environ.setdefault('PYTHONPATH', '/')
+os.environ.setdefault('DATABASE_URL', 'postgresql://quicksplit:notsecret@127.0.0.1:5432/quicksplit-dev')
+os.environ.setdefault('QUICKSPLIT_API_URL', 'http://127.0.0.1:5000')
+
+# These are all "test" keys in development, but we include all
+# versions in production so that test-users get sent to the test-stripe
+# data, even if they're created on the production app
+os.environ.setdefault('STRIPE_TEST_PUBLISHABLE_KEY', 'pk_test_vs6w4emCv9szUa8mJyeXKTey00IV5800C2')
+os.environ.setdefault('STRIPE_TEST_SECRET_KEY', 'sk_test_InjhthRyfgYjrOXULoSylt4g009H6voKLf')
+os.environ.setdefault('STRIPE_PRODUCTION_PUBLISHABLE_KEY', 'pk_test_vs6w4emCv9szUa8mJyeXKTey00IV5800C2')
+os.environ.setdefault('STRIPE_PRODUCTION_SECRET_KEY', 'sk_test_InjhthRyfgYjrOXULoSylt4g009H6voKLf')
+
 from flask import Flask, current_app, json, make_response, request, g, jsonify, session
 from flask_migrate import Migrate
 from flask_cors import CORS

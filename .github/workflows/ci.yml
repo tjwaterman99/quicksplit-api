@@ -4,53 +4,51 @@ jobs:
   deploy-staging:
     name: Deploy Staging
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Build docker containers
-        run: docker-compose build
-      - name: Start docker containers
-        run: docker-compose up --detach
-      - name: Log container status
-        run: sleep 5 && docker-compose ps
-      - name: Seed local containers
-        run: docker-compose exec -T web flask seed all
-      - name: Display seeds
-        run: docker-compose exec -T postgres psql -U developer -d development -c "select name, price_in_cents from plan;"
-      - name: Test containers
-        run: docker-compose exec -T web pytest tests/ -v
-      - name: Install Heroku
-        if: github.ref == 'refs/heads/master'
-        run: curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
-      - name: Deploy to Heroku staging
-        if: github.ref == 'refs/heads/master'
+    services:
+      postgres:
+        image: postgres:12.1
         env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-          HEROKU_APP_NAME: quick-split
-        run: |
-          docker tag quicksplit_web registry.heroku.com/quick-split/web
-          docker tag quicksplit_release registry.heroku.com/quick-split/release
-          docker login --username=_ --password=$HEROKU_API_KEY registry.heroku.com
-          docker push registry.heroku.com/quick-split/web
-          docker push registry.heroku.com/quick-split/release
-          heroku container:release --app $HEROKU_APP_NAME web release
-      - name: Test web requests against Heroku release
-        run: docker-compose run --rm -e QUICKSPLIT_API_URL=https://api.quicksplit.io web pytest tests/test_api.py
-        if: github.ref == 'refs/heads/master'
-      - name: Test locally installed CLI against Heroku release
-        run: docker-compose run --rm -e QUICKSPLIT_API_URL=https://api.quicksplit.io web pytest tests/test_cli.py
-        if: github.ref == 'refs/heads/master'
-      - name: Set up Python 3.7
-        if: github.ref == 'refs/heads/master'
+          POSTGRES_USER: quicksplit
+          POSTGRES_PASSWORD: notsecret
+          POSTGRES_DB: quicksplit-dev
+        ports:
+          - '5432:5432'
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Install Heroku
+        run: curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
+      - name: Install Python
         uses: actions/setup-python@v1
         with:
-          python-version: '3.7'
-      - name: Test PyPI deployed CLI against Heroku releases
-        if: github.ref == 'refs/heads/master'
-        env:
-          QUICKSPLIT_API_URL: https://api.quicksplit.io
-        run: |
-          pip --version
-          pip install quicksplit pytest
-          pip list
-          pytest ./tests/test_cli.py --noconftest
+          python-version: 3.7.6
+      - name: Install requirements
+        run: pip install -r requirements.txt
+      - name: Run migrations
+        run: flask db upgrade
+      - name: Seed database
+        run: flask seed all
+      - name: Start app
+        run: heroku local > logs.txt &
+      - name: Run tests
+        run: pytest
+      # - name: Deploy to Heroku staging
+      #   env:
+      #     HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      #     HEROKU_APP_NAME: quicksplit-testing
+      #   run: heroku git:remote quicksplit-test && git push heroku heroku-review-apps:master
+      # - name: Test web requests against Heroku release
+      #   run: docker-compose run --rm -e QUICKSPLIT_API_URL=https://api.quicksplit.io web pytest tests/test_api.py
+      #   if: github.ref == 'refs/heads/master'
+      # - name: Test locally installed CLI against Heroku release
+      #   run: docker-compose run --rm -e QUICKSPLIT_API_URL=https://api.quicksplit.io web pytest tests/test_cli.py
+      #   if: github.ref == 'refs/heads/master'
+      # - name: Test PyPI deployed CLI against Heroku releases
+      #   if: github.ref == 'refs/heads/master'
+      #   env:
+      #     QUICKSPLIT_API_URL: https://api.quicksplit.io
+      #   run: |
+      #     pip --version
+      #     pip install quicksplit pytest
+      #     pip list
+      #     pytest ./tests/test_cli.py --noconftest

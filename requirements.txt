@@ -1,0 +1,16 @@
+flask
+flask-sqlalchemy
+flask-migrate
+flask-restful
+flask-shell-ipython
+psycopg2-binary
+pytest
+gunicorn
+requests
+pandas
+statsmodels
+researchpy
+terminaltables
+funcy==1.14
+flask-cors==3.0.8
+stripe==2.37.2
