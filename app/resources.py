@@ -155,6 +155,13 @@ class ResultsResource(Resource):
         return result
 
 
+class ResultsDetailsResource(Resource):
+
+    @protected()
+    def get(self, result_id):
+        return g.user.experiment_results.filter(ExperimentResult.id==result_id).first()
+
+
 class ActivateResource(Resource):
 
     @protected()
@@ -281,6 +288,7 @@ api.add_resource(ExperimentsResource, '/experiments')
 api.add_resource(ExposuresResource, '/exposures')
 api.add_resource(ConversionsResource, '/conversions')
 api.add_resource(ResultsResource, '/results')
+api.add_resource(ResultsDetailsResource, '/results/<result_id>')
 api.add_resource(LoginResource, '/login')
 api.add_resource(ActivateResource, '/activate')
 api.add_resource(DeactivateResource, '/deactivate')

@@ -248,6 +248,12 @@ def test_results_get(db, client, experiment, exposure, conversion, experiment_re
     assert experiment_result_json['ran_at'] == None
 
 
+def test_results_details_get(db, client, user, experiment_result):
+    resp = client.get(f'/results/{experiment_result.id}')
+    assert resp.status_code == 200
+    assert resp.json['data']['id'] == str(experiment_result.id)
+
+
 def test_results_get_ran_experiment_result(db, client, experiment, exposure, conversion, experiment_result):
     ran_experiment_result = experiment_result.run()
     resp = client.get('/results')
