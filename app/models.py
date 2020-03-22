@@ -595,6 +595,8 @@ class ExperimentResult(TimestampMixin, db.Model):
 
     @classmethod
     def create(cls, experiment, scope):
+        if experiment.subjects_counter == 0:
+            raise ApiException(400, f"Experiment {experiment.name} has no subjects yet. Can't create a report!")
         experiment_result = cls(experiment=experiment, scope=scope, user=experiment.user)
         db.session.add(experiment_result)
         db.session.flush()

@@ -23,7 +23,7 @@ class Config(object):
         with open(self.config_fname, 'r') as o:
             data = load(o)
             self.token = data.get('token')
-            self.api_url = data.get('api_url') or self.api_url
+            self.api_url = self.api_url or data.get('api_url')
             self.user = data.get('user') or {}
 
     def dump_config(self):
