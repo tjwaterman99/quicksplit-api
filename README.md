@@ -166,7 +166,7 @@ This repository manages releases for both the web api and the CLI.
 
 ### API releases
 
-Pushes to master will automatically deploy the `www` build to Netlify and the `api` to Heroku. The Heroku deploy will also automatically run the schema migrations, but will not automatically run any data migrations.
+The master branch will automatically deploy to Heroku. The Heroku deploy will also automatically run the schema migrations, but will not automatically run any data migrations.
 
 Use the `flask db seed` command to run a specific data migration.
 
