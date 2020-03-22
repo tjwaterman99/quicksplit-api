@@ -1,4 +1,5 @@
 import datetime as dt
+import os
 
 from flask import request, g, current_app, make_response, json, session
 from flask_restful import Api, Resource
@@ -54,7 +55,14 @@ def params(call, *required, **optional):
 
 class IndexResource(Resource):
     def get(self):
-        return {'healthy': True}
+        return {
+            'healthy': True,
+            'version': {
+                'released_at': os.environ['HEROKU_RELEASE_CREATED_AT'],
+                'version': os.environ['HEROKU_RELEASE_VERSION'],
+                'id': os.environ['HEROKU_SLUG_COMMIT']
+            }
+        }
 
 
 class SessionsResource(Resource):

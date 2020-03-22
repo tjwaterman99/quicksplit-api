@@ -10,6 +10,9 @@ os.environ.setdefault('FLASK_ENV', 'development')
 os.environ.setdefault('PYTHONPATH', '/')
 os.environ.setdefault('DATABASE_URL', 'postgresql://quicksplit:notsecret@127.0.0.1:5432/quicksplit-dev')
 os.environ.setdefault('QUICKSPLIT_API_URL', 'http://127.0.0.1:5000')
+os.environ.setdefault('HEROKU_RELEASE_CREATED_AT', str(datetime.datetime.now()))
+os.environ.setdefault('HEROKU_RELEASE_VERSION', 'development')
+os.environ.setdefault('HEROKU_SLUG_COMMIT', 'development')
 
 # These are all "test" keys in development, but we include all
 # versions in production so that test-users get sent to the test-stripe
