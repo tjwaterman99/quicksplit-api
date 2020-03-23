@@ -21,7 +21,7 @@ from app.services import ExperimentResultCalculator
 from app.proxies import worker
 
 
-class ModelWriter(object):
+class AsyncWriterMixin(object):
     """
     Helper class for writing models in async workers. Ensures that various
     methods get called even when there is no flask request context, including
@@ -29,14 +29,14 @@ class ModelWriter(object):
     """
 
     @classmethod
-    def write(cls, Model, **create_kwargs):
-        if not hasattr(Model, 'create'):
-            raise ApiException(500, f"Can't save model {model} asynchronously.")
-        return worker.enqueue(cls._write, args=[Model], kwargs=create_kwargs)
+    def create_async(cls, *create_args, **create_kwargs):
+        if not hasattr(cls, 'create'):
+            raise ApiException(500, f"Can't save model {cls.__name__} asynchronously.")
+        return worker.enqueue(cls._create_async, args=create_args, kwargs=create_kwargs)
 
     @classmethod
-    def _write(cls, model, **create_kwargs):
-        obj = model.create(**create_kwargs)
+    def _create_async(cls, *create_args, **create_kwargs):
+        obj = cls.create(*create_args, **create_kwargs)
         db.session.add(obj)
         db.session.commit()
         return obj
@@ -137,7 +137,7 @@ class Session(TimestampMixin, db.Model):
 
 
 @dataclass
-class Contact(TimestampMixin, db.Model):
+class Contact(AsyncWriterMixin, TimestampMixin, db.Model):
     id: str
     email: str
     message: str

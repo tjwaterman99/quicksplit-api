@@ -8,7 +8,7 @@ from funcy import decorator
 from app.models import (
     db, Account, User, Token, Experiment, Subject, Conversion, Exposure, Role,
     Cohort, Scope, Event, Plan, Contact, PaymentMethod, Session, ExposureRollup,
-    ExperimentResult, ModelWriter
+    ExperimentResult
 )
 from app.services import ExperimentResultCalculator
 from app.sql import recent_events
@@ -255,7 +255,7 @@ class ContactsResource(Resource):
 
         if missing_fields:
             raise ApiException(401, f"Please include the following information: {missing_fields}")
-        job = ModelWriter.write(Contact, email=email, subject=subject, message=message)
+        job = Contact.create_async(email=email, subject=subject, message=message)
         return {'job': job}
 
 
@@ -281,7 +281,7 @@ class StripeWebhooksResource(Resource):
         if request.json['type'] == "payment_method.attached":
             return self.payment_method_attached()
         else:
-            logger.info(f"No handling for stripe webhook type: {request.json['type']} ({request.json['id']})")
+            current_app.logger.info(f"No handling for stripe webhook type: {request.json['type']} ({request.json['id']})")
 
 
 api.add_resource(IndexResource, '/')
