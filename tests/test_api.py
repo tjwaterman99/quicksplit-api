@@ -194,3 +194,13 @@ def test_logging_out(client):
     client.logout()
     resp = client.get('/experiments')
     assert resp.status_code == 403
+
+
+def test_contact_is_received(client, email):
+    resp = client.post('/contacts',  data={
+        'message': 'This is a test message',
+        'email': email,
+        'subject': "Hello from test run!"
+    })
+    assert resp.status_code == 200
+    assert resp.json()['data']['job']['id'] is not None
