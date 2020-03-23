@@ -18,6 +18,28 @@ db = SQLAlchemy(engine_options={'json_serializer': CustomJSONEncoder().encode})
 
 from app.exceptions import ApiException
 from app.services import ExperimentResultCalculator
+from app.proxies import worker
+
+
+class ModelWriter(object):
+    """
+    Helper class for writing models in async workers. Ensures that various
+    methods get called even when there is no flask request context, including
+    commiting the database session.
+    """
+
+    @classmethod
+    def write(cls, Model, **create_kwargs):
+        if not hasattr(Model, 'create'):
+            raise ApiException(500, f"Can't save model {model} asynchronously.")
+        return worker.enqueue(cls._write, args=[Model], kwargs=create_kwargs)
+
+    @classmethod
+    def _write(cls, model, **create_kwargs):
+        obj = model.create(**create_kwargs)
+        db.session.add(obj)
+        db.session.commit()
+        return obj
 
 
 class TimestampMixin(object):
@@ -138,10 +160,6 @@ class Contact(TimestampMixin, db.Model):
         contact = cls(user=None, email=email, subject=subject, message=message)
         db.session.add(contact)
         db.session.flush()
-        # Hack to have the session get commited if the method was sent in
-        # an RQ job
-        if not current_app.testing and not request:
-            db.session.commit()
         return contact
 
 

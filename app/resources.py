@@ -8,7 +8,7 @@ from funcy import decorator
 from app.models import (
     db, Account, User, Token, Experiment, Subject, Conversion, Exposure, Role,
     Cohort, Scope, Event, Plan, Contact, PaymentMethod, Session, ExposureRollup,
-    ExperimentResult
+    ExperimentResult, ModelWriter
 )
 from app.services import ExperimentResultCalculator
 from app.sql import recent_events
@@ -255,11 +255,7 @@ class ContactsResource(Resource):
 
         if missing_fields:
             raise ApiException(401, f"Please include the following information: {missing_fields}")
-        job = worker.enqueue(Contact.create, kwargs={
-            'email': email,
-            'subject': subject,
-            'message': message
-        })
+        job = ModelWriter.write(Contact, email=email, subject=subject, message=message)
         return {'job': job}
 
 

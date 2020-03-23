@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from werkzeug.local import LocalProxy
 from flask_redis import FlaskRedis
-from flask import current_app, g
+from flask import current_app, g, request
 from rq import Queue
 from rq.job import Job
 
