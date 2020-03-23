@@ -14,6 +14,8 @@ class ProductionConfig(object):
     STRIPE_PRODUCTION_PUBLISHABLE_KEY = os.environ['STRIPE_PRODUCTION_PUBLISHABLE_KEY']
     STRIPE_PRODUCTION_SECRET_KEY = os.environ['STRIPE_PRODUCTION_SECRET_KEY']
     WORKER_QUEUES = ['default']
+    SENDGRID_DEFAULT_FROM_ADDRESS = "tjwaterman99@gmail.com"
+    SENDGRID_API_KEY = os.environ['SENDGRID_API_KEY']
 
 
 class TestingConfig(ProductionConfig):

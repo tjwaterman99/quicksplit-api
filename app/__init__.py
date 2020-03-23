@@ -23,6 +23,9 @@ os.environ.setdefault('STRIPE_TEST_SECRET_KEY', 'sk_test_InjhthRyfgYjrOXULoSylt4
 os.environ.setdefault('STRIPE_PRODUCTION_PUBLISHABLE_KEY', 'pk_test_vs6w4emCv9szUa8mJyeXKTey00IV5800C2')
 os.environ.setdefault('STRIPE_PRODUCTION_SECRET_KEY', 'sk_test_InjhthRyfgYjrOXULoSylt4g009H6voKLf')
 
+# Sendgrid api key that can send demo emails
+os.environ.setdefault('SENDGRID_API_KEY', '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')
+
 from flask import (
     Flask, current_app, json, make_response, request, g, jsonify, session
 )
@@ -40,6 +43,7 @@ from app.services import ExperimentResultCalculator
 from app.exceptions import ApiException
 from app.commands import seed, rollup, worker
 from app.encoders import CustomJSONEncoder
+from app.proxies import get_worker, get_mailer, get_redis
 
 
 def handle_api_exception(exc):
@@ -127,8 +131,11 @@ def shell_context():
         'Token': Token,
         'ExperimentResultCalculator': ExperimentResultCalculator,
         'PlanSchedule': PlanSchedule,
-        'user': User.query.order_by(User.created_at.desc()).first(),
-        'stripe': stripe
+        'user': User.query.order_by(User.created_at.asc()).first(),
+        'stripe': stripe,
+        'mailer': get_mailer(),
+        'worker': get_worker(),
+        'redis': get_redis()
     }
 
 
