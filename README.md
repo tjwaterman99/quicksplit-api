@@ -8,11 +8,11 @@ The developer tool for fast, simple A/B tests.
 
 ## Development
 
-The instructions below are for MacOS. We use a Python virtual environment set up and a local installation of Postgres.
+The instructions below are for MacOS. We use a Python virtual environment set up and a local installation of Postgres and Redis.
 
 ### Installing postgres
 
-Install postgres with Brew.
+Install postgres with brew.
 
 ```
 brew install postgresql
@@ -37,10 +37,31 @@ CREATE USER "quicksplit" WITH CREATEDB PASSWORD 'password';
 CREATE DATABASE "quicksplit-dev" WITH OWNER "quicksplit";
 ```
 
-### Installing Python and `virtualenv`
+### Installing redis
+
+Install redis with brew.
+
+```
+brew install redis
+```
+
+Start redis.
+
+```
+brew services start redis
+```
+
+### Installing Python
+
+Install pyenv with brew.
 
 ```
 brew install pyenv
+```
+
+Install Python 3.7
+
+```
 pyenv install 3.7.6
 ```
 
@@ -75,10 +96,18 @@ Install the Python dependencies.
 venv/bin/pip install -r requirements.txt
 ```
 
+## Starting the webserver
+
+Install the Heroku cli with brew.
+
+```
+brew install heroku
+```
+
 You should now be able to start the development web server.
 
 ```
-venv/bin/flask run
+heroku local web=1,worker=1
 ```
 
 Confirm that the application is running successfully.
