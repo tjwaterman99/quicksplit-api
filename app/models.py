@@ -18,7 +18,7 @@ db = SQLAlchemy(engine_options={'json_serializer': CustomJSONEncoder().encode})
 
 from app.exceptions import ApiException
 from app.services import ExperimentResultCalculator
-from app.proxies import worker
+from app.proxies import worker, mailer
 
 
 class AsyncWriterMixin(object):
@@ -160,6 +160,7 @@ class Contact(AsyncWriterMixin, TimestampMixin, db.Model):
         contact = cls(user=None, email=email, subject=subject, message=message)
         db.session.add(contact)
         db.session.flush()
+        mailer.send_text_email(to=email, subject=subject, content=message)
         return contact
 
 
