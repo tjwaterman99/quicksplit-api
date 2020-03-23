@@ -65,7 +65,7 @@ class Mailer(object):
             }],
             "mail_settings": {
                 "sandbox_mode": {
-                    "enable": self.production
+                    "enable": not self.production
                 }
             }
         }
