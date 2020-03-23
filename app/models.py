@@ -138,6 +138,10 @@ class Contact(TimestampMixin, db.Model):
         contact = cls(user=None, email=email, subject=subject, message=message)
         db.session.add(contact)
         db.session.flush()
+        # Hack to have the session get commited if the method was sent in
+        # an RQ job
+        if not current_app.testing and not request:
+            db.session.commit()
         return contact
 
 
