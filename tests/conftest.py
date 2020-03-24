@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 import random
 import os
 import uuid
@@ -5,6 +6,8 @@ import datetime as dt
 
 import pytest
 import sqlalchemy
+
+load_dotenv()
 
 from app import create_app
 from app.models import (
