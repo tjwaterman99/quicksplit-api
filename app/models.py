@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 from dataclasses import dataclass, asdict
 import uuid
 import datetime as dt
@@ -278,9 +278,34 @@ class PlanChange(TimestampMixin, db.Model):
 
 
 @dataclass
+class PaymentMethod(TimestampMixin, db.Model):
+    id: str
+    stripe_data: dict
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False)
+    stripe_payment_method_id = db.Column(db.String(), nullable=False)
+    stripe_data = db.Column(JSONB())
+
+    account = db.relationship("Account", backref=db.backref("payment_methods", lazy="joined"), lazy="joined")
+
+    @classmethod
+    def create(cls, account, stripe_payment_method_id, stripe_data=None):
+        payment_method = cls(
+            account=account,
+            stripe_payment_method_id=stripe_payment_method_id,
+            stripe_data=stripe_data
+        )
+        db.session.add(payment_method)
+        db.session.flush()
+        return payment_method
+
+
+@dataclass(init=False)
 class Account(TimestampMixin, db.Model):
     plan: Plan
     id: str
+    payment_methods: List[PaymentMethod]
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     plan_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=False)
@@ -384,30 +409,6 @@ class Account(TimestampMixin, db.Model):
             self.bill_at = dt.datetime.now() + plan.schedule.interval.days
         db.session.add(self)
         db.session.flush()
-
-
-@dataclass
-class PaymentMethod(TimestampMixin, db.Model):
-    account: 'Account'
-    id: str
-
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False)
-    stripe_payment_method_id = db.Column(db.String(), nullable=False)
-    stripe_data = db.Column(JSONB())
-
-    account = db.relationship("Account", backref=db.backref("payment_methods", lazy="joined"), lazy="joined")
-
-    @classmethod
-    def create(cls, account, stripe_payment_method_id, stripe_data=None):
-        payment_method = cls(
-            account=account,
-            stripe_payment_method_id=stripe_payment_method_id,
-            stripe_data=stripe_data
-        )
-        db.session.add(payment_method)
-        db.session.flush()
-        return payment_method
 
 
 @dataclass
