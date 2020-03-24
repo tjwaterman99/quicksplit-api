@@ -45,7 +45,6 @@ python-dateutil==2.8.1
 python-dotenv==0.12.0
 python-editor==1.0.4
 pytz==2019.3
--e git+git@github.com:tjwaterman99/quicksplit-api.git@23ddf0c5364f48c78d8103456107616a8157fb65#egg=quicksplit&subdirectory=cli
 redis==3.4.1
 requests==2.23.0
 researchpy==0.1.9
