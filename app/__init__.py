@@ -3,36 +3,13 @@ import os
 import datetime
 from uuid import UUID
 
-os.environ.setdefault('PORT', '5000')
-os.environ.setdefault('SECRET_KEY', 'notsecret')
-os.environ.setdefault('FLASK_APP', 'app')
-os.environ.setdefault('FLASK_ENV', 'development')
-os.environ.setdefault('PYTHONPATH', '/')
-os.environ.setdefault('DATABASE_URL', 'postgresql://quicksplit:notsecret@127.0.0.1:5432/quicksplit-dev')
-os.environ.setdefault('REDIS_URL', 'redis://127.0.0.1:6379/0')
-os.environ.setdefault('QUICKSPLIT_API_URL', 'http://127.0.0.1:5000')
-os.environ.setdefault('HEROKU_RELEASE_CREATED_AT', str(datetime.datetime.now()))
-os.environ.setdefault('HEROKU_RELEASE_VERSION', 'development')
-os.environ.setdefault('HEROKU_SLUG_COMMIT', 'development')
-
-# These are all "test" keys in development, but we include all
-# versions in production so that test-users get sent to the test-stripe
-# data, even if they're created on the production app
-os.environ.setdefault('STRIPE_TEST_PUBLISHABLE_KEY', 'pk_test_vs6w4emCv9szUa8mJyeXKTey00IV5800C2')
-os.environ.setdefault('STRIPE_TEST_SECRET_KEY', 'sk_test_InjhthRyfgYjrOXULoSylt4g009H6voKLf')
-os.environ.setdefault('STRIPE_PRODUCTION_PUBLISHABLE_KEY', 'pk_test_vs6w4emCv9szUa8mJyeXKTey00IV5800C2')
-os.environ.setdefault('STRIPE_PRODUCTION_SECRET_KEY', 'sk_test_InjhthRyfgYjrOXULoSylt4g009H6voKLf')
-
-# Sendgrid api key that can send demo emails
-os.environ.setdefault('SENDGRID_API_KEY', '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')
-
+import stripe
 from flask import (
     Flask, current_app, json, make_response, request, g, jsonify, session
 )
 from flask_migrate import Migrate
 from flask_cors import CORS
 from werkzeug.utils import import_string
-import stripe
 
 from app.resources import api
 from app.models import (
