@@ -405,6 +405,7 @@ class Account(TimestampMixin, db.Model):
             self.bill_at = self.downgrade_at
             self.downgrade_at = None
             self.downgrade_plan = None
+            order = None
             db.session.add(self)
             db.session.flush()
         elif plan > self.plan:

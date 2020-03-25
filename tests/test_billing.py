@@ -119,9 +119,13 @@ def test_monthly_developer_plan_to_annual_developer_plan(db, paying_account, use
     assert orders[0].amount == annual_developer_plan.price_in_cents - monthly_developer_plan.price_in_cents
 
 
+# We do allow changing from "free to free" even though it's a bit irrational.
+# The front end should try to ensure this behavior doesn't happen, though.
 def test_free_plan_to_free_plan(db, user, free_plan):
     plan_change = user.account.change_plan(free_plan)
-    assert plan_change is None
+    assert plan_change.plan_change_from == free_plan
+    assert plan_change.plan_change_to == free_plan
+    assert plan_change.order == None
 
 
 def test_developer_monthly_to_developer_monthly(db, paying_account, user, monthly_developer_plan):
@@ -130,8 +134,7 @@ def test_developer_monthly_to_developer_monthly(db, paying_account, user, monthl
     plan_changes = user.account.plan_changes.all()
 
     assert first_plan_change in plan_changes
-    assert second_plan_change is None
-    assert second_plan_change not in plan_changes
+    assert second_plan_change in plan_changes
 
 
 def test_paid_plan_to_free_plan(db, paying_account, user, annual_developer_plan, free_plan):
