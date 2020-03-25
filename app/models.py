@@ -257,7 +257,8 @@ class Order(TimestampMixin, db.Model):
                 customer=account.stripe_customer_id,
                 off_session=True,
                 confirm=True,
-                description=f"Order for {account} on plan {plan}")
+                description=f"Order for {account} on plan {plan}",
+                api_key=account.stripe_secret_key)
             succeeded = True
             payment_intent_id = payment_intent.id
         except stripe.error.CardError as e:
@@ -438,7 +439,7 @@ class Account(TimestampMixin, db.Model):
         if plan.price_in_cents == 0:
             self.bill_at = None
         else:
-            self.bill_at = dt.datetime.now() + plan.schedule.interval.days
+            self.bill_at = dt.datetime.now() + plan.schedule.interval
         db.session.add(self)
         db.session.flush()
 
