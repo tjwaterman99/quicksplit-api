@@ -209,6 +209,7 @@ class Plan(TimestampMixin, db.Model):
     self_serve: bool
     public: bool
     schedule: PlanSchedule
+    schedule_name: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = db.Column(db.String(), nullable=False, index=True)
@@ -220,6 +221,11 @@ class Plan(TimestampMixin, db.Model):
     self_serve = db.Column(db.Boolean(), default=False)
 
     schedule =  db.relationship('PlanSchedule', backref="plan", uselist=False)
+
+    @property
+    def schedule_name(self):
+        if self.schedule:
+            return self.schedule.name
 
     def __repr__(self):
         return f"<Plan {self.name} schedule={self.schedule}>"
@@ -392,12 +398,15 @@ class Account(TimestampMixin, db.Model):
             customer=self.stripe_customer_id
         )
 
-    # TODO: If the account is scheduled to downgrade, they won't get "unscheduled"
-    # by changing back to their previous plan.
     def change_plan(self, plan):
         current_plan = self.plan
+        # This could be moved into it's own method "unschedule downgrade"
         if plan == self.plan:
-            return
+            self.bill_at = self.downgrade_at
+            self.downgrade_at = None
+            self.downgrade_plan = None
+            db.session.add(self)
+            db.session.flush()
         elif plan > self.plan:
             order = self.upgrade(plan)
         else:
@@ -411,13 +420,14 @@ class Account(TimestampMixin, db.Model):
 
     @property
     def days_until_next_bill(self):
-        if not self.bill_at:
+        bill_or_downgrade_day = self.bill_at or self.downgrade_at
+        if not bill_or_downgrade_day:
             return None
-        return (self.bill_at - dt.datetime.now().date()).days
+        return (bill_or_downgrade_day - dt.datetime.now().date()).days
 
     @property
     def billing_credits(self):
-        if not self.bill_at:
+        if not self.days_until_next_bill:
             return 0
         return self.plan.price_in_cents * self.days_until_next_bill / self.plan.schedule.interval.days
 
@@ -425,6 +435,8 @@ class Account(TimestampMixin, db.Model):
         order = self.charge(plan.price_in_cents - self.billing_credits, plan=plan)
         self.plan = plan
         self.bill_at = dt.datetime.now().date() + self.plan.schedule.interval
+        self.downgrade_at = None
+        self.downgrade_plan = None
         db.session.add(self)
         db.session.flush()
         return order
@@ -433,13 +445,14 @@ class Account(TimestampMixin, db.Model):
         if immediate is True:
             self.plan = plan
             self.downgrade_at = None
+            self.downgrade_plan = None
         else:
             self.downgrade_plan = plan
-            self.downgrade_at = self.bill_at
+            self.downgrade_at = self.bill_at or self.downgrade_at
         if plan.price_in_cents == 0:
             self.bill_at = None
         else:
-            self.bill_at = dt.datetime.now() + plan.schedule.interval
+            self.bill_at = self.bill_at or dt.datetime.now() + plan.schedule.interval
         db.session.add(self)
         db.session.flush()
 
