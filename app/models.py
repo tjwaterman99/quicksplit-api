@@ -280,6 +280,7 @@ class PlanChange(TimestampMixin, db.Model):
 @dataclass
 class PaymentMethod(TimestampMixin, db.Model):
     id: str
+    stripe_payment_method_id: str
     stripe_data: dict
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

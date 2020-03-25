@@ -274,7 +274,8 @@ class StripeWebhooksResource(Resource):
         if not account:
             raise ApiException(404, f"No account with stripe customer id {stripe_customer_id} found.")
         stripe_payment_method_id = request.json['data']['object']['id']
-        return PaymentMethod.create(account=account, stripe_data=request.json, stripe_payment_method_id=stripe_payment_method_id)
+        stripe_data = request.json['data']['object']
+        return PaymentMethod.create(account=account, stripe_data=stripe_data, stripe_payment_method_id=stripe_payment_method_id)
 
     def post(self):
         current_app.logger.info(f"Received stripe webhook {request.json['type']} ({request.json['id']})")
