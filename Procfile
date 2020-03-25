@@ -1,5 +1,4 @@
-web: flask run
-# web: gunicorn 'app:create_app()' --workers 2 --threads 8 --bind 0.0.0.0:$PORT --log-level INFO
+web: gunicorn 'app:create_app()' --workers 2 --threads 8 --bind 0.0.0.0:$PORT --log-level INFO
 worker: flask worker run
 
 # Only used in development.
