@@ -8,7 +8,7 @@ from funcy import decorator
 from app.models import (
     db, Account, User, Token, Experiment, Subject, Conversion, Exposure, Role,
     Cohort, Scope, Event, Plan, Contact, PaymentMethod, Session, ExposureRollup,
-    ExperimentResult
+    ExperimentResult, PlanSchedule
 )
 from app.services import ExperimentResultCalculator
 from app.sql import recent_events
@@ -266,6 +266,27 @@ class AccountPaymentSetupResource(Resource):
         return g.user.account.create_stripe_setup_intent()
 
 
+class AccountPlanResource(Resource):
+
+    @protected()
+    def get(self):
+        return g.user.account.plan
+
+    @protected()
+    @params("schedule_name", "name")
+    def patch(self, schedule_name, name):
+        plan_to_change_query = db.session.query(Plan)\
+                                   .filter(Plan.name==name)
+        if name == "free":
+            plan = plan_to_change_query.first()
+        else:
+            plan = plan_to_change_query.join(PlanSchedule)\
+                                       .filter(PlanSchedule.name==schedule_name)\
+                                       .first()
+        g.user.account.change_plan(plan)
+        return g.user.account.plan
+
+
 class StripeWebhooksResource(Resource):
 
     def payment_method_attached(self):
@@ -301,6 +322,7 @@ api.add_resource(EventsResource, '/events')
 api.add_resource(PlansResource, '/plans')
 api.add_resource(ContactsResource, '/contacts')
 api.add_resource(AccountPaymentSetupResource, '/account/payment-setup')
+api.add_resource(AccountPlanResource, '/account/plan')
 api.add_resource(StripeWebhooksResource, '/webhooks/stripe')
 api.add_resource(SessionsResource, '/sessions')
 api.add_resource(SummaryExposuresResource, '/summaries/exposures')

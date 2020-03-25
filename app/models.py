@@ -189,6 +189,9 @@ class PlanSchedule(TimestampMixin, db.Model):
     name = db.Column(db.String(), nullable=False, index=True, unique=True)
     interval = db.Column(INTERVAL, nullable=False, index=True, unique=True)
 
+    def __repr__(self):
+        return f"<PlanSchedule {self.name}>"
+
     @property
     def interval_days(self):
         return self.interval.days
@@ -218,6 +221,9 @@ class Plan(TimestampMixin, db.Model):
 
     schedule =  db.relationship('PlanSchedule', backref="plan", uselist=False)
 
+    def __repr__(self):
+        return f"<Plan {self.name} schedule={self.schedule}>"
+
     def __lt__(self, other):
         return self.price_in_cents < other.price_in_cents
 
@@ -233,13 +239,32 @@ class Order(TimestampMixin, db.Model):
     plan_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=False)
     account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False)
     amount = db.Column(db.Integer(), nullable=False, index=True)
+    payment_intent_id = db.Column(db.String(), nullable=False, index=True)
+    succeeded = db.Column(db.Boolean(), nullable=False, index=True)
 
     account = db.relationship('Account', backref=db.backref('orders', lazy="dynamic"), lazy="joined")
     plan = db.relationship('Plan', backref=db.backref('orders', lazy="dynamic"), lazy="joined")
 
     @classmethod
     def create(cls, plan, account, amount):
-        order = cls(plan=plan, account=account, amount=amount)
+        if account.payment_methods == []:
+            raise ApiException(403, "No payment methods found on account.")
+        try:
+            payment_intent = stripe.PaymentIntent.create(
+                amount=plan.price_in_cents,
+                currency="usd",
+                payment_method=account.payment_methods[0].stripe_payment_method_id,
+                customer=account.stripe_customer_id,
+                off_session=True,
+                confirm=True,
+                description=f"Order for {account} on plan {plan}")
+            succeeded = True
+            payment_intent_id = payment_intent.id
+        except stripe.error.CardError as e:
+            succeeded = False
+            payment_intent_id = err.payment_intent_id
+        order = cls(plan=plan, account=account, amount=amount,
+                    succeeded=succeeded, payment_intent_id=payment_intent_id)
         db.session.add(order)
         db.session.flush()
         return order
@@ -307,6 +332,9 @@ class Account(TimestampMixin, db.Model):
     plan: Plan
     id: str
     payment_methods: List[PaymentMethod]
+    downgrade_plan: Plan
+    downgrade_at: str
+    bill_at: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     plan_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=False)
@@ -318,6 +346,9 @@ class Account(TimestampMixin, db.Model):
 
     plan = db.relationship('Plan', backref='accounts', lazy="joined", foreign_keys=[plan_id])
     downgrade_plan = db.relationship('Plan', lazy="joined", foreign_keys=[downgrade_plan_id])
+
+    def __repr__(self):
+        return f"<Account {self.id}>"
 
     @classmethod
     def create_stripe_customer(cls, stripe_livemode=False):
@@ -360,10 +391,10 @@ class Account(TimestampMixin, db.Model):
             customer=self.stripe_customer_id
         )
 
-    # TODO: Stripe integration and handling billing  errors
+    # TODO: If the account is scheduled to downgrade, they won't get "unscheduled"
+    # by changing back to their previous plan.
     def change_plan(self, plan):
         current_plan = self.plan
-        print(plan, current_plan)
         if plan == self.plan:
             return
         elif plan > self.plan:

@@ -26,6 +26,7 @@ from app.proxies import get_worker, get_mailer, get_redis
 def handle_api_exception(exc):
     if not current_app.testing:
         db.session.rollback()
+    print(f"Handling exception {exc} ...")
     return make_response(json.dumps(exc), exc.status_code)
 
 

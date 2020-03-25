@@ -3,16 +3,19 @@ import random
 import os
 import uuid
 import datetime as dt
+import stripe
 
 import pytest
 import sqlalchemy
+from flask import current_app
 
 load_dotenv()
 
 from app import create_app
 from app.models import (
     db as _db, Role, Plan, Account, User, Subject, Experiment, Exposure,
-    Conversion, Token, Cohort, Scope, PlanSchedule, ExposureRollup, ExperimentResult
+    Conversion, Token, Cohort, Scope, PlanSchedule, ExposureRollup,
+    ExperimentResult, PaymentMethod
 )
 from app.seeds import plans, roles, scopes, plan_schedules
 
@@ -51,6 +54,19 @@ def stripe_customer_id():
     return Account.create_stripe_customer(stripe_livemode=False)['id']
 
 
+@pytest.fixture(scope='session')
+def stripe_payment_method(stripe_customer_id):
+    stripe.api_key = current_app.config['STRIPE_TEST_SECRET_KEY']
+    card = stripe.PaymentMethod.create(type="card", card={
+        "number": "4242" * 4,
+        "exp_month": 12,
+        "exp_year": 2020,
+        "cvc": 500
+    })
+    stripe.PaymentMethod.attach(card.id, customer=stripe_customer_id)
+    return card
+
+
 @pytest.fixture()
 def email():
     return f"tester@quicksplit.io"
@@ -82,6 +98,16 @@ def staging_scope():
 @pytest.fixture()
 def account(db, stripe_customer_id):
     account = Account.create(stripe_customer_id=stripe_customer_id)
+    return account
+
+
+@pytest.fixture()
+def paying_account(db, account, stripe_payment_method):
+    PaymentMethod.create(
+        account=account,
+        stripe_payment_method_id=stripe_payment_method.id,
+        stripe_data=stripe_payment_method
+    )
     return account
 
 
