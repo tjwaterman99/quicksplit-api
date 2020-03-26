@@ -34,7 +34,6 @@ jobs:
         run: flask seed all
       - name: Start app
         run: heroku local > logs.txt &
-        with: FLASK_ENV=ci
       - name: Run tests
         run: pytest
       # - name: Deploy to Heroku staging
