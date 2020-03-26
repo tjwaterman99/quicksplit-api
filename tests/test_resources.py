@@ -41,6 +41,11 @@ def test_root_index(client):
     assert resp.status_code == 200
 
 
+def test_404_error_code(client):
+    resp = client.get('/thisroutewillneverexist')
+    assert resp.status_code == 404
+
+
 def test_user_get(db, client, user):
     resp = client.get('/user')
     assert resp.status_code == 200

@@ -1,4 +1,3 @@
-import traceback
 import os
 import datetime
 from uuid import UUID
@@ -17,29 +16,13 @@ from app.models import (
     Cohort, Scope, PlanSchedule, Order, Session
 )
 from app.services import ExperimentResultCalculator
-from app.exceptions import ApiException
+from app.exceptions import (
+    ApiException, handle_api_exception, handle_uncaught_exception,
+    handle_route_not_found_exception
+)
 from app.commands import seed, rollup, worker
 from app.encoders import CustomJSONEncoder
 from app.proxies import get_worker, get_mailer, get_redis
-
-
-def handle_api_exception(exc):
-    if not current_app.testing:
-        db.session.rollback()
-    return make_response(json.dumps(exc), exc.status_code)
-
-
-def handle_uncaught_exception(exc):
-    if not current_app.testing:
-        db.session.rollback()
-    current_app.logger.error("Unhandled error: " + str(exc))
-    current_app.logger.error(traceback.format_exc())
-    resp = {
-        'data': None,
-        'message': "Unexpected exception occured. Please try again later.",
-        'status_code': 500
-    }
-    return make_response(json.dumps(resp), 500)
 
 
 def load_session():
@@ -142,6 +125,7 @@ def create_app():
 
     app.register_error_handler(Exception, handle_uncaught_exception)
     app.register_error_handler(ApiException, handle_api_exception)
+    app.register_error_handler(404, handle_route_not_found_exception)
 
     app.cli.add_command(seed)
     app.cli.add_command(rollup)
