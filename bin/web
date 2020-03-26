@@ -5,7 +5,7 @@ source .env
 if [ "$FLASK_ENV" = "development" ]
 then
   echo "In development mode"
-  venv/bin/flask run
+  flask run
 else
   echo "in production mode"
   gunicorn 'app:create_app()' --workers 2 --threads 8 --bind 0.0.0.0:$PORT --log-level INFO
