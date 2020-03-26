@@ -669,9 +669,9 @@ class ExperimentResult(TimestampMixin, db.Model):
     experiment_name: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), nullable=False)
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False)
-    scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
+    experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), nullable=False, index=True)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False, index=True)
+    scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False, index=True)
     version = db.Column(db.String(10))
     fields = db.Column(JSONB())
     ran_at = db.Column(db.DateTime(timezone=True), index=True)
