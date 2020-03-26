@@ -56,19 +56,19 @@ class EventTrackerMixin(object):
 
     @declared_attr
     def last_exposure_id_staging(cls):
-        return db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id', name='experiment_last_exposure_id_staging_fkey'))
+        return db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id', name='experiment_last_exposure_id_staging_fkey'), index=True)
 
     @declared_attr
     def last_exposure_id_production(cls):
-        return db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id', name='experiment_last_exposure_id_production_fkey'))
+        return db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id', name='experiment_last_exposure_id_production_fkey'), index=True)
 
     @declared_attr
     def last_conversion_id_staging(cls):
-        return db.Column(UUID(as_uuid=True), db.ForeignKey('conversion.id', name='experiment_last_conversion_id_staging_fkey'))
+        return db.Column(UUID(as_uuid=True), db.ForeignKey('conversion.id', name='experiment_last_conversion_id_staging_fkey'), index=True)
 
     @declared_attr
     def last_conversion_id_production(cls):
-        return db.Column(UUID(as_uuid=True), db.ForeignKey('conversion.id', name='experiment_last_conversion_id_production_fkey'))
+        return db.Column(UUID(as_uuid=True), db.ForeignKey('conversion.id', name='experiment_last_conversion_id_production_fkey'), index=True)
 
     @declared_attr
     def last_exposure_staging(cls):
@@ -118,7 +118,7 @@ class Session(TimestampMixin, db.Model):
     created_at: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False, index=True)
 
     user = db.relationship("User", lazy="joined", uselist=False, backref=db.backref("sessions", lazy="dynamic"))
 
@@ -144,7 +144,7 @@ class Contact(AsyncWriterMixin, TimestampMixin, db.Model):
     subject: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'))
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), index=True)
     email = db.Column(db.String(), nullable=False, index=True)
     subject = db.Column(db.String(), nullable=False)
     message = db.Column(db.String(), nullable=False)
@@ -173,7 +173,7 @@ class Event(TimestampMixin, db.Model):
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = db.Column(db.String(), nullable=False, index=True)
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'))
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), index=True)
     data = db.Column(JSONB())
 
     user = db.relationship("User", backref=db.backref("events", lazy="dynamic"))
@@ -225,7 +225,7 @@ class Plan(TimestampMixin, db.Model):
     price_in_cents = db.Column(db.Integer(), nullable=False)
     max_subjects_per_experiment = db.Column(db.Integer(), nullable=False)
     max_active_experiments = db.Column(db.Integer(), nullable=False)
-    schedule_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan_schedule.id'))
+    schedule_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan_schedule.id'), index=True)
     public = db.Column(db.Boolean(), default=False)
     self_serve = db.Column(db.Boolean(), default=False)
 
@@ -258,8 +258,8 @@ class Order(TimestampMixin, db.Model):
     id: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    plan_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=False)
-    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False)
+    plan_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=False, index=True)
+    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False, index=True)
     amount = db.Column(db.Integer(), nullable=False, index=True)
     payment_intent_id = db.Column(db.String(), nullable=False, index=True)
     succeeded = db.Column(db.Boolean(), nullable=False, index=True)
@@ -301,10 +301,10 @@ class PlanChange(TimestampMixin, db.Model):
     id: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False)
-    plan_change_from_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=False)
-    plan_change_to_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=False)
-    order_id = db.Column(UUID(as_uuid=True), db.ForeignKey('order.id'), nullable=True)
+    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False, index=True)
+    plan_change_from_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=False, index=True)
+    plan_change_to_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=False, index=True)
+    order_id = db.Column(UUID(as_uuid=True), db.ForeignKey('order.id'), nullable=True, index=True)
 
     __tablename__ = "plan_change"
 
@@ -332,7 +332,7 @@ class PaymentMethod(TimestampMixin, db.Model):
     stripe_data: dict
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False)
+    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False, index=True)
     stripe_payment_method_id = db.Column(db.String(), nullable=False)
     stripe_data = db.Column(JSONB())
 
@@ -360,8 +360,8 @@ class Account(TimestampMixin, db.Model):
     bill_at: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    plan_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=False)
-    downgrade_plan_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=True)
+    plan_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=False, index=True)
+    downgrade_plan_id = db.Column(UUID(as_uuid=True), db.ForeignKey('plan.id'), nullable=True, index=True)
     downgrade_at = db.Column(db.Date(), nullable=True)
     bill_at = db.Column(db.Date(), nullable=True)
     stripe_customer_id = db.Column(db.String())
@@ -500,10 +500,10 @@ class Token(TimestampMixin, db.Model):
     private: bool
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False)
-    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False)
-    role_id = db.Column(UUID(as_uuid=True), db.ForeignKey('role.id'), nullable=False)
-    scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False, index=True)
+    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False, index=True)
+    role_id = db.Column(UUID(as_uuid=True), db.ForeignKey('role.id'), nullable=False, index=True)
+    scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False, index=True)
     value = db.Column(UUID(as_uuid=True), unique=True, index=True, default=uuid.uuid4)
 
     account = db.relationship('Account', lazy='joined')
@@ -528,7 +528,7 @@ class User(TimestampMixin, db.Model):
     account: Account
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'))
+    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), index=True)
 
     email = db.Column(db.String(length=128), nullable=False, unique=True)
     password_hash = db.Column(db.String(length=128), nullable=False)
@@ -607,7 +607,7 @@ class Experiment(EventTrackerMixin, TimestampMixin, db.Model):
     user_id: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False, index=True)
     name = db.Column(db.String(length=64), index=True)
 
     subjects_counter_production = db.Column(db.Integer(), nullable=False, default=0)
@@ -713,8 +713,8 @@ class Subject(EventTrackerMixin, TimestampMixin, db.Model):
     subject_id: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False)
-    scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
+    account_id = db.Column(UUID(as_uuid=True), db.ForeignKey('account.id'), nullable=False, index=True)
+    scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False, index=True)
     name = db.Column(db.String(length=64), nullable=False, index=True)
 
     __table_args__ = (db.UniqueConstraint('account_id', 'name', 'scope_id'), )
@@ -732,7 +732,7 @@ class Cohort(EventTrackerMixin, TimestampMixin, db.Model):
     name: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), nullable=False)
+    experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), nullable=False, index=True)
     name = db.Column(db.String(length=64), nullable=False, index=True)
 
     experiment = db.relationship('Experiment', backref='cohorts')
@@ -750,10 +750,10 @@ class Exposure(TimestampMixin, db.Model):
     last_seen_at: str
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    cohort_id = db.Column(UUID(as_uuid=True), db.ForeignKey('cohort.id'), nullable=False)
-    subject_id = db.Column(UUID(as_uuid=True), db.ForeignKey('subject.id'), nullable=False)
-    experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), nullable=False)
-    scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
+    cohort_id = db.Column(UUID(as_uuid=True), db.ForeignKey('cohort.id'), nullable=False, index=True)
+    subject_id = db.Column(UUID(as_uuid=True), db.ForeignKey('subject.id'), nullable=False, index=True)
+    experiment_id = db.Column(UUID(as_uuid=True), db.ForeignKey('experiment.id'), nullable=False, index=True)
+    scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False, index=True)
     last_seen_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
 
     __table_args__ = (db.UniqueConstraint('subject_id', 'experiment_id', 'scope_id'), )
@@ -848,8 +848,8 @@ class Conversion(TimestampMixin, db.Model):
     value: float
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    exposure_id = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id'), nullable=False)
-    scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False)
+    exposure_id = db.Column(UUID(as_uuid=True), db.ForeignKey('exposure.id'), nullable=False, index=True)
+    scope_id = db.Column(UUID(as_uuid=True), db.ForeignKey('scope.id'), nullable=False, index=True)
     value = db.Column(db.Float())
     last_seen_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
 
