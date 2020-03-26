@@ -1,12 +1,13 @@
 #!/bin/bash
 
-source .env
 
-if [ "$FLASK_ENV" = "development" ]
+
+if [ "$FLASK_ENV" = "production" ]
 then
-  echo "In development mode"
-  flask run
-else
   echo "in production mode"
   gunicorn 'app:create_app()' --workers 2 --threads 8 --bind 0.0.0.0:$PORT --log-level INFO
+else
+  echo "In development mode"
+  source .env
+  flask run
 fi
