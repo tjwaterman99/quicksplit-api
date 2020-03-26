@@ -201,6 +201,14 @@ class PlanSchedule(TimestampMixin, db.Model):
 
 @dataclass
 class Plan(TimestampMixin, db.Model):
+
+    ranks = {
+        'free': 0,
+        'developer': 1,
+        'team': 2,
+        'custom': 3
+    }
+
     id: str
     name: str
     price_in_cents: int
@@ -210,6 +218,7 @@ class Plan(TimestampMixin, db.Model):
     public: bool
     schedule: PlanSchedule
     schedule_name: str
+    rank: int
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = db.Column(db.String(), nullable=False, index=True)
@@ -227,14 +236,21 @@ class Plan(TimestampMixin, db.Model):
         if self.schedule:
             return self.schedule.name
 
+    @property
+    def rank(self):
+        return self.ranks[self.name]
+
     def __repr__(self):
         return f"<Plan {self.name} schedule={self.schedule}>"
 
     def __lt__(self, other):
-        return self.price_in_cents < other.price_in_cents
+        if self.rank < other.rank:
+            return True
+        else:
+            return self.price_in_cents < other.price_in_cents
 
     def __eq__(self, other):
-        return self.price_in_cents == other.price_in_cents
+        return self.rank == other.rank and self.price_in_cents == other.price_in_cents
 
 
 @dataclass
