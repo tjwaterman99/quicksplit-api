@@ -243,7 +243,9 @@ class EventsResource(Resource):
 class PlansResource(Resource):
 
     def get(self):
-        return Plan.query.filter(Plan.public==True).all()
+        plans = Plan.query.filter(Plan.public==True).all()
+        sorted_plans = list(sorted(plans))
+        return sorted_plans
 
 
 class ContactsResource(Resource):
