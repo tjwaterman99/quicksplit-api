@@ -96,27 +96,6 @@ def staging_scope():
 
 
 @pytest.fixture()
-def account(db, stripe_customer_id):
-    account = Account.create(stripe_customer_id=stripe_customer_id)
-    return account
-
-
-@pytest.fixture()
-def paying_account(db, account, stripe_payment_method):
-    PaymentMethod.create(
-        account=account,
-        stripe_payment_method_id=stripe_payment_method.id,
-        stripe_data=stripe_payment_method
-    )
-    return account
-
-
-@pytest.fixture()
-def user(db, email, account, production_scope, password):
-    return User.create(email=email, password=password, account=account)
-
-
-@pytest.fixture()
 def free_plan(db):
     return Plan.query.filter(Plan.price_in_cents==0).first()
 
@@ -148,6 +127,41 @@ def annual_developer_plan(db,  annual_schedule):
     return Plan.query.filter(Plan.name=="developer")\
                      .filter(Plan.schedule_id==annual_schedule.id)\
                      .first()
+
+
+@pytest.fixture()
+def annual_team_plan(db,  annual_schedule):
+    return Plan.query.filter(Plan.name=="team")\
+                     .filter(Plan.schedule_id==annual_schedule.id)\
+                     .first()
+
+
+@pytest.fixture()
+def account(db, stripe_customer_id):
+    account = Account.create(stripe_customer_id=stripe_customer_id)
+    return account
+
+
+@pytest.fixture()
+def paying_account(db, account, stripe_payment_method):
+    PaymentMethod.create(
+        account=account,
+        stripe_payment_method_id=stripe_payment_method.id,
+        stripe_data=stripe_payment_method
+    )
+    return account
+
+
+@pytest.fixture()
+def user(db, email, account, production_scope, password):
+    return User.create(email=email, password=password, account=account)
+
+
+@pytest.fixture()
+def team_plan_user(db, paying_account, annual_team_plan, email, password):
+    user = User.create(email="paying" + email, password=password, account=paying_account)
+    user.account.change_plan(annual_team_plan)
+    return user
 
 
 @pytest.fixture()
