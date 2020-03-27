@@ -1,4 +1,3 @@
-recent_events = """
 with recent_exposures as (
 select
     exposure.id,
@@ -50,42 +49,3 @@ select * from
 recent_agg
 order by recent_agg.last_seen_at desc
 limit 15
-"""
-
-experiment_loader_query = """
-select
-    experiment.name,
-    subject.name as subject,
-    cohort.name as cohort,
-    case when conversion.id is null then 0 else 1 end as converted,
-    conversion.value as conversion_value
-from experiment
-join exposure on experiment.id = exposure.experiment_id
-join subject on exposure.subject_id = subject.id
-join cohort on exposure.cohort_id = cohort.id
-join scope on exposure.scope_id = scope.id
-left join conversion on conversion.exposure_id = exposure.id
-where experiment.id = '{experiment_id}'::uuid
-    and scope.id = '{scope_id}'
-"""
-
-exposures_summary = """
-select
-    '{date}'::date as day,
-    "user".id as user_id,
-    account.id as account_id,
-    experiment.id as experiment_id,
-    experiment.name as experiment_name,
-    exposure.scope_id as scope_id,
-    count(exposure.id) as exposures,
-    count(conversion.id) as conversions
-from experiment
-join "user" on experiment.user_id = "user".id
-join account on "user".account_id = account.id
-join exposure on exposure.experiment_id = experiment.id
-    and exposure.last_seen_at::date = '{date}'::date
-left join conversion on conversion.exposure_id = exposure.id
-    and conversion.last_seen_at::date = '{date}'::date
-group by 1,2,3,4,5,6
-order by 1 desc
-"""
